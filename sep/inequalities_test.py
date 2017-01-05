@@ -134,5 +134,35 @@ x2 >= 0
 x3 >= 0
 x4 >= 0""")
 
+		"""Use a graph with V != E"""
+		self.assertEqual(inequalities.makeCplex(range(1, 4+1), [(1,2), (1,3), (2,3), (2,4), (3,4)],
+{
+(1,2): 3.1,
+(1,3): 3.02,
+(2,3): 3.04,
+(2,4): 3.02,
+(3,4): 3
+}),
+"""\
+Minimize
+3.1x1 + 3.02x2 + 3.04x3 + 3.02x4 + 3x5
+subject to
+x1 + x2 = 2
+x1 + x3 + x4 = 2
+x2 + x3 + x5 = 2
+x4 + x5 = 2
+x2 + x3 + x4 >= 2
+x1 + x3 + x5 >= 2
+x1 + x2 + x4 + x5 >= 2
+x1 + x2 + x4 + x5 >= 2
+x1 + x3 + x5 >= 2
+x2 + x3 + x4 >= 2
+bounds
+x1 >= 0
+x2 >= 0
+x3 >= 0
+x4 >= 0
+x5 >= 0""")
+
 if __name__ == '__main__':
 	unittest.main()

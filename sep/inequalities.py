@@ -37,10 +37,10 @@ subject to
 {inequalities}
 bounds
 {bounds}""".format(
-equalities='\n'.join(' + '.join("x{}".format(v) for v in constraint[1]) + " = 2" for constraint in degreeConstraints(vertices, edges, True)),
+equalities='\n'.join(' + '.join("x{}".format(i) for i in constraint[1]) + " = 2" for constraint in degreeConstraints(vertices, edges, True)),
 objective=' + '.join("{}x{}".format("" if weights == None else weights[e], i) for i,e in enumerate(edges, 1)),
-inequalities='\n'.join(' + '.join("x{}".format(v) for v in constraint[1]) + " >= 2" for constraint in deltas(vertices, edges, True)),
-bounds='\n'.join("x{} >= 0".format(v) for v in vertices)
+inequalities='\n'.join(' + '.join("x{}".format(i) for i in constraint[1]) + " >= 2" for constraint in deltas(vertices, edges, True)),
+bounds='\n'.join("x{} >= 0".format(i) for i,e in enumerate(edges, 1))
 )
 
 def inequalities(vertices, edges):
