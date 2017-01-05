@@ -164,5 +164,52 @@ x3 >= 0
 x4 >= 0
 x5 >= 0""")
 
+	"""
+Here is a different graph: K3 2-sum K3
+
+E = 12 13 14 24 34
+E* = 13 23 12 13 23
+w = 2 2.1 2.05 1.95 1.96
+
+Faces (boundary subgraphs) (boundary vertices):
+d1: e1, e3, e4 ; p2, p1, p4
+d2: e2, e3, e5 ; p3, p1, p4
+d3: e1, e2, e4, e5 : p1, p2, p4, p3
+
+"""
+	def test_makeExtendedLp(self):
+		self.maxDiff = None
+		self.assertEqual(inequalities.makeExtendedLp(
+range(1, 4+1), 
+[(1,2), (1,3), (1,4), (2,4), (3,4)],
+[(1,2,4), (1,3,4), (1,2,3,4)],
+[(1,3), (2,3), (1,2), (1,3), (2,3)],
+3
+),
+"""\
+Minimize
+x1 + x2 + x3 + x4 + x5
+subject to
+x1 + z1,1 + z1,3 = 1
+x3 + z3,1 + z3,2 = 1
+x4 + z4,1 + z4,3 = 1
+z1,1 + z3,1 + z4,1 = 1
+x1 + x2 + x3 = 2
+x1 + x4 = 2
+x2 + x5 = 2
+x3 + x4 + x5 = 2
+bounds
+x1 >= 0
+x2 >= 0
+x3 >= 0
+x4 >= 0
+x5 >= 0
+z1,1 >= 0
+z1,3 >= 0
+z3,1 >= 0
+z3,2 >= 0
+z4,1 >= 0
+z4,3 >= 0""")
+
 if __name__ == '__main__':
 	unittest.main()

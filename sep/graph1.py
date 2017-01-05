@@ -14,5 +14,6 @@ print(inequalities.makeCplex(V, E, weights))
 
 Vstar = range(1,4+1)
 # there is a duplicate edge
-Estar = [(1,2),(1,3),(1,4),(2,3),(2,4),(3,4),(3,4)]
+# make sure these are exactly the intersecting pairs for the dual of the dual (primal) edges
+Estar = [(1,4), (1,3), (3,4), (1,2), (2,4), (2,3), (3,4)]
 

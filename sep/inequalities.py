@@ -29,6 +29,7 @@ def degreeConstraints(vertices, edges, usePlaceholders=False):
 		elif usePlaceholders:
 			yield ((i,), [j for j,e in enumerate(edges, 1) if i in e])
 
+
 def makeSepLp(vertices, edges, weights=None):
 	return """Minimize
 {objective}
@@ -43,3 +44,34 @@ inequalities='\n'.join(' + '.join("x{}".format(i) for i in constraint[1]) + " >=
 bounds='\n'.join("x{} >= 0".format(i) for i,e in enumerate(edges, 1))
 )
 
+"""
+dualVertices: iterable of (iterables of (vertices on each face))
+dualEdges: the ith dual edge should intersect the ith primal edge
+vinf: arbitrary vertex
+"""
+def makeExtendedLp(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
+	assert len(edges) == len(dualEdges)
+	assert len(vertices) + len(dualVertices) - len(dualEdges) == 2
+
+	import itertools
+
+	# z_ev, e in E, vinf not in e, v in V*, v in e*
+	extraVariables = dict((eIndex, ["z{},{}".format(eIndex, fIndex) for fIndex in dualEdges[eIndex - 1]]) for eIndex, e in enumerate(edges, 1) if (vinf not in e))
+
+	return """Minimize
+{objective}
+subject to
+{mixedEqualities}
+{pureExtraEqualities}
+{degreeEqualities}
+bounds
+{bounds}""".format(
+mixedEqualities='\n'.join("x{} + {} + {} = 1".format(pair[0], pair[1][0], pair[1][1]) for pair in extraVariables.items()),
+pureExtraEqualities='\n'.join(" + ".join("z{},{}".format(eIndex, fIndex) for eIndex, e in enumerate(dualEdges, 1) if fIndex in e) + " = 1" for fIndex, f in enumerate(dualVertices, 1) if vinf not in f),
+degreeEqualities='\n'.join(' + '.join("x{}".format(i) for i in constraint[1]) + " = 2" for constraint in degreeConstraints(vertices, edges, True)),
+objective=' + '.join("{}x{}".format("" if weights == None else weights[e], i) for i,e in enumerate(edges, 1)),
+bounds='\n'.join(itertools.chain(
+("x{} >= 0".format(i) for i,e in enumerate(edges, 1)),
+("{} >= 0".format(z) for z in itertools.chain(*(extraVariables.values())))
+))
+)
