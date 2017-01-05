@@ -29,7 +29,7 @@ def degreeConstraints(vertices, edges, usePlaceholders=False):
 		elif usePlaceholders:
 			yield ((i,), [j for j,e in enumerate(edges, 1) if i in e])
 
-def makeCplex(vertices, edges, weights=None):
+def makeSepLp(vertices, edges, weights=None):
 	return """Minimize
 {objective}
 subject to
@@ -42,7 +42,4 @@ objective=' + '.join("{}x{}".format("" if weights == None else weights[e], i) fo
 inequalities='\n'.join(' + '.join("x{}".format(i) for i in constraint[1]) + " >= 2" for constraint in deltas(vertices, edges, True)),
 bounds='\n'.join("x{} >= 0".format(i) for i,e in enumerate(edges, 1))
 )
-
-def inequalities(vertices, edges):
-	pass	
 

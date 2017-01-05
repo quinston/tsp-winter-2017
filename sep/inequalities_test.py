@@ -62,7 +62,7 @@ sorted(list(inequalities.degreeConstraints(range(1, 4+1), [(1,2), (1,3), (2,3), 
 ]
 )
 
-	def test_makeCplex(self):
+	def test_makeSepLp(self):
 		"""
 Here are the constraints for the graph E=[(1,2),(1,3),(2,3),(2,4)]
 
@@ -82,7 +82,7 @@ Here are the constraints for the graph E=[(1,2),(1,3),(2,3),(2,4)]
 ((2,3,4), [(1,2), (1,3)])
 ]
 """
-		self.assertEqual(inequalities.makeCplex(range(1, 4+1), [(1,2), (1,3), (2,3), (2,4)]),
+		self.assertEqual(inequalities.makeSepLp(range(1, 4+1), [(1,2), (1,3), (2,3), (2,4)]),
 """\
 Minimize
 x1 + x2 + x3 + x4
@@ -107,7 +107,7 @@ x4 >= 0""")
 Retry with weights: 3.1 3.02 3.04 3.02
 		"""
 
-		self.assertEqual(inequalities.makeCplex(range(1, 4+1), [(1,2), (1,3), (2,3), (2,4)],
+		self.assertEqual(inequalities.makeSepLp(range(1, 4+1), [(1,2), (1,3), (2,3), (2,4)],
 {
 (1,2): 3.1,
 (1,3): 3.02,
@@ -135,7 +135,7 @@ x3 >= 0
 x4 >= 0""")
 
 		"""Use a graph with V != E"""
-		self.assertEqual(inequalities.makeCplex(range(1, 4+1), [(1,2), (1,3), (2,3), (2,4), (3,4)],
+		self.assertEqual(inequalities.makeSepLp(range(1, 4+1), [(1,2), (1,3), (2,3), (2,4), (3,4)],
 {
 (1,2): 3.1,
 (1,3): 3.02,
