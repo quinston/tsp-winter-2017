@@ -20,6 +20,14 @@ def deltas(vertices, edges, usePlaceholders=False):
 			elif usePlaceholders:
 				yield (S, [i for i,e in enumerate(edges, 1) if (e[0] in S and e[1] not in S) or (e[0] not in S and e[1] in S)])
 
+def degreeConstraints(vertices, edges, usePlaceholders=False):
+	import itertools
+	for i in vertices:
+		if not usePlaceholders:
+			yield ((i,), [e for e in edges if i in e])
+		elif usePlaceholders:
+			yield ((i,), [j for j,e in enumerate(edges, 1) if i in e])
+
 def inequalities(vertices, edges):
 	pass	
 
