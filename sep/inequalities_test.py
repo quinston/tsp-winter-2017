@@ -15,10 +15,6 @@ sorted(list(inequalities.deltas(range(1, 4+1),
 # first sort by length, then by content
 key=lambda x: (len(x[0]), x)),
 [
-((1,), [(1,2), (1,3)]),
-((2,), [(1,2), (2,3), (2,4)]),
-((3,), [(1,3), (2,3)]),
-((4,), [(2,4)]),
 ((1,2), [(1,3), (2,3), (2,4)]),
 ((1,3), [(1,2), (2,3)]),
 ((1,4), [(1,2), (1,3), (2,4)]),
@@ -35,10 +31,6 @@ usePlaceholders=True
 # first sort by length, then by content
 key=lambda x: (len(x[0]), x)),
 [
-((1,), [1, 2]),
-((2,), [1,3,4]),
-((3,), [2,3]),
-((4,), [4]),
 ((1,2), [2,3,4]),
 ((1,3), [1,3]),
 ((1,4), [1,2,4]),
@@ -91,7 +83,7 @@ Here are the constraints for the graph E=[(1,2),(1,3),(2,3),(2,4)]
 ]
 """
 		self.assertEqual(inequalities.makeCplex(range(1, 4+1), [(1,2), (1,3), (2,3), (2,4)]),
-"""
+"""\
 Minimize
 x1 + x2 + x3 + x4
 subject to
@@ -105,11 +97,11 @@ x1 + x2 + x4 >= 2
 x1 + x2 + x4 >= 2
 x1 + x3 >= 2
 x2 + x3 + x4 >= 2
-0 <= x1 <= infinity
-0 <= x2 <= infinity
-0 <= x3 <= infinity
-0 <= x4 <= infinity
-""")
+bounds
+x1 >= 0
+x2 >= 0
+x3 >= 0
+x4 >= 0""")
 
 if __name__ == '__main__':
 	unittest.main()
