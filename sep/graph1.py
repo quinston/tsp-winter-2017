@@ -1,7 +1,10 @@
 import inequalities
+import pprint 
+
+pp = pprint.PrettyPrinter()
 
 def pretty(x):
-	return sorted(list(x), key=lambda y:(len(y[0]),y))
+	return pp.pformat(sorted(list(x), key=lambda y:(len(y[0]),y)))
 
 V = range(1,5+1)
 E = [(1,2),(1,3),(1,5),(2,3),(2,4),(3,4),(4,5)]
