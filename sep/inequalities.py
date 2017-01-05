@@ -4,6 +4,7 @@
 """
 vertices: of the form range(1, n+1)
 edges: list of iterables, each set containing two integers
+weights: map from edges to real numbers
 """
 
 """
@@ -28,7 +29,7 @@ def degreeConstraints(vertices, edges, usePlaceholders=False):
 		elif usePlaceholders:
 			yield ((i,), [j for j,e in enumerate(edges, 1) if i in e])
 
-def makeCplex(vertices, edges):
+def makeCplex(vertices, edges, weights=None):
 	return """Minimize
 {objective}
 subject to
@@ -37,7 +38,7 @@ subject to
 bounds
 {bounds}""".format(
 equalities='\n'.join(' + '.join("x{}".format(v) for v in constraint[1]) + " = 2" for constraint in degreeConstraints(vertices, edges, True)),
-objective=' + '.join("x{}".format(v) for v in vertices),
+objective=' + '.join("{}x{}".format("" if weights == None else weights[e], i) for i,e in enumerate(edges, 1)),
 inequalities='\n'.join(' + '.join("x{}".format(v) for v in constraint[1]) + " >= 2" for constraint in deltas(vertices, edges, True)),
 bounds='\n'.join("x{} >= 0".format(v) for v in vertices)
 )
