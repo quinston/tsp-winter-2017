@@ -14,7 +14,6 @@ def deltas(vertices, edges):
 	for i in range(1, len(vertices)):
 		for S in itertools.combinations(vertices, i):
 			yield (S, [e for e in edges if (e[0] in S and e[1] not in S) or (e[0] not in S and e[1] in S)])
-	
 
 def inequalities(vertices, edges):
 	pass	
