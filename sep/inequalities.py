@@ -104,8 +104,6 @@ def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vin
 	extraVariables = getExtraVariables(edges, dualEdges, vinf)
 	noOriginalVariables = len(edges)
 	noExtraVariables = 2 * len(extraVariables) 
-	print(noOriginalVariables)
-	print(noExtraVariables)
 	noVariables = noOriginalVariables + noExtraVariables
 
 	# Assign indices to the extra variables ze,u's starting after the xi's
