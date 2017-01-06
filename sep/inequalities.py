@@ -85,6 +85,16 @@ def makeExtendedLp(vertices, edges, dualVertices, dualEdges, vinf, weights=None)
 ))
 
 """
+e.g. if the final variables are in that order then x1, x2, x3, z3,1, z3,2,
+then return
+
+["x1", "x2", "x3", "z3,1", "z3,2"]
+"""
+def enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf):
+	import itertools
+	return ["x{}".format(i) for i in range(1, len(edges)+1)] + list(itertools.chain(*(uv for e,uv in sorted(getExtraVariables(edges, dualEdges, vinf).items()))))
+
+"""
 Gives rows of Ax <= b that comprise the description of the extended formulation of SEP
 
 Returns: iterable of (a: iterable of real, b: real)
