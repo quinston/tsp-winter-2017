@@ -58,20 +58,18 @@ def makeExtendedLp(vertices, edges, dualVertices, dualEdges, vinf, weights=None)
 	# z_ev, e in E, vinf not in e, v in V*, v in e*
 	extraVariables = dict((eIndex, ["z{},{}".format(eIndex, fIndex) for fIndex in dualEdges[eIndex - 1]]) for eIndex, e in enumerate(edges, 1) if (vinf not in e))
 
-	return """Minimize
-{objective}
-subject to
-{mixedEqualities}
-{pureExtraEqualities}
-{degreeEqualities}
-bounds
-{bounds}""".format(
-mixedEqualities='\n'.join("x{} + {} + {} = 1".format(pair[0], pair[1][0], pair[1][1]) for pair in extraVariables.items()),
-pureExtraEqualities='\n'.join(" + ".join("z{},{}".format(eIndex, fIndex) for eIndex, e in enumerate(dualEdges, 1) if fIndex in e) + " = 1" for fIndex, f in enumerate(dualVertices, 1) if vinf not in f),
-degreeEqualities='\n'.join(' + '.join("x{}".format(i) for i in constraint[1]) + " = 2" for constraint in degreeConstraints(vertices, edges, True)),
-objective=' + '.join("{}x{}".format("" if weights == None else weights[e], i) for i,e in enumerate(edges, 1)),
-bounds='\n'.join(itertools.chain(
+	return "\n".join(itertools.chain(
+["Minimize"],
+#Objective
+[(' + '.join("{}x{}".format("" if weights == None else weights[e], i) for i,e in enumerate(edges, 1)))],
+["subject to"],
+#Mixed inequalities
+("x{} + {} + {} = 1".format(pair[0], pair[1][0], pair[1][1]) for pair in extraVariables.items()),
+#Inequalities with purely additional variables
+(" + ".join("z{},{}".format(eIndex, fIndex) for eIndex, e in enumerate(dualEdges, 1) if fIndex in e) + " = 1" for fIndex, f in enumerate(dualVertices, 1) if vinf not in f),
+# Degree constraints
+(' + '.join("x{}".format(i) for i in constraint[1]) + " = 2" for constraint in degreeConstraints(vertices, edges, True)),
+["bounds"],
 ("x{} >= 0".format(i) for i,e in enumerate(edges, 1)),
 ("{} >= 0".format(z) for z in itertools.chain(*(extraVariables.values())))
 ))
-)

@@ -211,5 +211,34 @@ z3,2 >= 0
 z4,1 >= 0
 z4,3 >= 0""")
 
+	def test_avoidBlankLinesInExtendedLp(self):
+		V = range(1, 4+1)
+		E = [(1,2),(1,3),(1,4),(2,4),(3,4)]
+		weights = {(1,2): 2, (1,3): 2.1, (1,4): 2.05, (2,4): 1.95, (3,4): 1.96}
+		Vstar = [(1,2,4), (1,3,4), (1,2,3,4)]
+		Estar = [(1,3), (2,3), (1,2), (1,3), (2,3)]
+		# avoid blank lines in constraints
+		self.assertEqual(inequalities.makeExtendedLp(V, E, Vstar, Estar, 1),
+"""\
+Minimize
+x1 + x2 + x3 + x4 + x5
+subject to
+x4 + z4,1 + z4,3 = 1
+x5 + z5,2 + z5,3 = 1
+x1 + x2 + x3 = 2
+x1 + x4 = 2
+x2 + x5 = 2
+x3 + x4 + x5 = 2
+bounds
+x1 >= 0
+x2 >= 0
+x3 >= 0
+x4 >= 0
+x5 >= 0
+z4,1 >= 0
+z4,3 >= 0
+z5,2 >= 0
+z5,3 >= 0""")
+
 if __name__ == '__main__':
 	unittest.main()
