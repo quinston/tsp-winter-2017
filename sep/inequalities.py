@@ -21,6 +21,10 @@ def deltas(vertices, edges, usePlaceholders=False):
 			elif usePlaceholders:
 				yield (S, [i for i,e in enumerate(edges, 1) if (e[0] in S and e[1] not in S) or (e[0] not in S and e[1] in S)])
 
+"""
+Returns an iterable of ((v), (e1, e2, ...))
+where delta(v) = {e1, e2, ...}
+"""
 def degreeConstraints(vertices, edges, usePlaceholders=False):
 	import itertools
 	for i in vertices:
@@ -45,6 +49,12 @@ bounds='\n'.join("x{} >= 0".format(i) for i,e in enumerate(edges, 1))
 )
 
 """
+Returns a dictionary of the form { e -> ["ze,u", "ze,v"] } where e* = {u,v}, vinf not in e, e in E
+"""
+def getExtraVariables(edges, dualEdges, vinf):
+	return dict((eIndex, ["z{},{}".format(eIndex, fIndex) for fIndex in dualEdges[eIndex - 1]]) for eIndex, e in enumerate(edges, 1) if (vinf not in e))
+
+"""
 dualVertices: iterable of (iterables of (vertices on each face))
 dualEdges: the ith dual edge should intersect the ith primal edge
 vinf: arbitrary vertex
@@ -56,7 +66,7 @@ def makeExtendedLp(vertices, edges, dualVertices, dualEdges, vinf, weights=None)
 	import itertools
 
 	# z_ev, e in E, vinf not in e, v in V*, v in e*
-	extraVariables = dict((eIndex, ["z{},{}".format(eIndex, fIndex) for fIndex in dualEdges[eIndex - 1]]) for eIndex, e in enumerate(edges, 1) if (vinf not in e))
+	extraVariables = getExtraVariables(edges, dualEdges, vinf)
 
 	return "\n".join(itertools.chain(
 ["Minimize"],
@@ -73,3 +83,55 @@ def makeExtendedLp(vertices, edges, dualVertices, dualEdges, vinf, weights=None)
 ("x{} >= 0".format(i) for i,e in enumerate(edges, 1)),
 ("{} >= 0".format(z) for z in itertools.chain(*(extraVariables.values())))
 ))
+
+"""
+Gives rows of Ax <= b that comprise the description of the extended formulation of SEP
+
+Returns: iterable of (a: iterable of real, b: real)
+"""
+def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vinf):
+	import itertools
+	extraVariables = getExtraVariables(edges, dualEdges, vinf)
+	noOriginalVariables = len(edges)
+	noExtraVariables = 2 * len(extraVariables) 
+	print(noOriginalVariables)
+	print(noExtraVariables)
+	noVariables = noOriginalVariables + noExtraVariables
+
+	# Assign indices to the extra variables ze,u's starting after the xi's
+	enumerationOfExtraVariables = dict((x,n) for n,x in enumerate(itertools.chain(*(extraVariables.values())), noOriginalVariables + 1))
+
+	ret = []
+
+	# Mixed equalities
+	for edgeIndex, edgeExtraVariables in extraVariables.items():
+		row = [0] * noVariables
+		row[edgeIndex - 1] = row[enumerationOfExtraVariables[edgeExtraVariables[0]] - 1] = row[enumerationOfExtraVariables[edgeExtraVariables[1]] - 1] = 1
+		ret.append((tuple(row), 1))
+		ret.append((tuple(-x for x in row), -1))
+
+	# Pure extra equalities
+	for fIndex, f in enumerate(dualVertices, 1):
+		if vinf not in f:
+			row = [0] * noVariables
+			for eIndex, e in enumerate(dualEdges, 1):
+				if fIndex in e:
+					row[enumerationOfExtraVariables["z{},{}".format(eIndex, fIndex)] - 1] = 1
+			ret.append((tuple(row), 1))
+			ret.append((tuple(-x for x in row), -1))
+
+	# Degree inequalities
+	for constraint in degreeConstraints(vertices, edges, True):
+		row = [0] * noVariables
+		for i in constraint[1]:
+			row[i - 1] = 1
+		ret.append((tuple(row), 2))
+		ret.append((tuple(-x for x in row), -2))
+
+	# Bounds
+	for i in range(noVariables):
+		row = [0] * noVariables
+		row[i] = -1
+		ret.append((tuple(row), 0))
+
+	return tuple(ret)
