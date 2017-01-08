@@ -115,8 +115,8 @@ def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vin
 	for edgeIndex, edgeExtraVariables in extraVariables.items():
 		row = [0] * noVariables
 		row[edgeIndex - 1] = row[enumerationOfExtraVariables[edgeExtraVariables[0]] - 1] = row[enumerationOfExtraVariables[edgeExtraVariables[1]] - 1] = 1
-		ret.append((tuple(row), 1))
-		ret.append((tuple(-x for x in row), -1))
+		ret.append((row, 1))
+		ret.append(([-x for x in row], -1))
 
 	# Pure extra equalities
 	for fIndex, f in enumerate(dualVertices, 1):
@@ -125,21 +125,22 @@ def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vin
 			for eIndex, e in enumerate(dualEdges, 1):
 				if fIndex in e:
 					row[enumerationOfExtraVariables["z{},{}".format(eIndex, fIndex)] - 1] = 1
-			ret.append((tuple(row), 1))
-			ret.append((tuple(-x for x in row), -1))
+			ret.append((row, 1))
+			ret.append(([-x for x in row], -1))
 
 	# Degree inequalities
 	for constraint in degreeConstraints(vertices, edges, True):
 		row = [0] * noVariables
 		for i in constraint[1]:
 			row[i - 1] = 1
-		ret.append((tuple(row), 2))
-		ret.append((tuple(-x for x in row), -2))
+		ret.append((row, 2))
+		ret.append(([-x for x in row], -2))
 
 	# Bounds
 	for i in range(noVariables):
 		row = [0] * noVariables
 		row[i] = -1
-		ret.append((tuple(row), 0))
+		ret.append((row, 0))
 
-	return tuple(ret)
+	return ret
+

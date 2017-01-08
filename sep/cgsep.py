@@ -3,7 +3,6 @@ import sys
 import cplex
 from cplex.exceptions import CplexError
 
-d = 0.01
 
 """
 Let x* be a point we are trying to separate.
@@ -22,14 +21,7 @@ f_0 = u^Tb - a_0
 a_j integer, j = 0 or j \in J(x*)
 """
 
-"""
-Take a point to separate x and a matrix-vector pair (A,b)
-
-A is most likely a list of rows
-
-This is kind of unfortuante since we have to read A by columns
-"""
-def solve(x, A, b):
+def makeCgLp(x, A, b, d):
 	support = [(i+1) for i in range(len(x)) if x[i] > 0]
 
 	variables = ["a0"] + ["a{}".format(i) for i in support] 
@@ -73,13 +65,30 @@ cplex.SparsePair(ind = ["f0", "a0"] + coefficientVariables, val = [-1, -1] + b),
 			rhs = [0] * len(slackVariables)
 )
 
-		prob.write("./cg1.lp")
-		prob.solve()
+		return prob
 
 	except CplexError as e:
 		print(e, file=sys.stderr)
 		return
 
-	print("Problem status: ", prob.solution.status[prob.solution.get_status()])
-	print("Primal values: ", list(zip(prob.variables.get_names(), prob.solution.get_values())))
-	print("Objective value: ", prob.solution.get_objective_value())
+"""
+Take a point to separate x and a matrix-vector pair (A,b)
+
+A is most likely a list of rows
+
+This is kind of unfortuante since we have to read A by columns
+"""
+def solve(x, A, b, d):
+
+	try:
+		prob = makeCgLp(x, A, b, d)
+		prob.solve()
+
+		print("Problem status: ", prob.solution.status[prob.solution.get_status()])
+		print("Primal values: ", list(zip(prob.variables.get_names(), prob.solution.get_values())))
+		print("Objective value: ", prob.solution.get_objective_value())
+
+	except CplexError as e:
+		print(e, file=sys.stderr)
+		return
+
