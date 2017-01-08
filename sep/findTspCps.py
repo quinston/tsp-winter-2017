@@ -35,6 +35,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 
 		polytopeProb.linear_constraints.add(lin_expr = Alol, rhs = b, senses = 'L' * len(b)) 
 
+		polytopeProb.set_results_stream(None)
 		polytopeProb.solve()
 
 		pointToSeparate = polytopeProb.solution.get_values()
@@ -42,6 +43,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 		cpProb = cgsep.makeCgLp(pointToSeparate, A, b, 0.01)
 		cpViolation = 1e20
 
+		cpProb.set_results_stream(None)
 		cpProb.solve()
 		
 		cpVector = cpProb.solution.get_values()[1:len(variableNames) + 1]
@@ -68,12 +70,14 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 					rhs = [-cpDistance],
 					senses = 'L')
 
+			polytopeProb.set_results_stream(None)
 			polytopeProb.solve()
 			pointToSeparate = polytopeProb.solution.get_values()
 			print("New point to separate: ", pointToSeparate)
 			print("Objective value: ", polytopeProb.solution.get_objective_value())
 
 			cpProb = cgsep.makeCgLp(pointToSeparate, A, b, 0.01)
+			cpProb.set_results_stream(None)
 			cpProb.solve()
 
 			cpVector = cpProb.solution.get_values()[1:len(variableNames) + 1]
@@ -85,7 +89,6 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			cpDistance = cpProb.solution.get_values()[0]
 			cpViolation = cpProb.solution.get_objective_value()
 
-			print("Gap: ", cpViolation)
 
 
 
