@@ -20,7 +20,8 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 		polytopeProb.objective.set_sense(polytopeProb.objective.sense.minimize)
 		
 		polytopeProb.variables.add(names = variableNames,
-				obj = objectiveFunction)
+				obj = objectiveFunction,
+				lb = [0] * len(variableNames))
 		Ab = inequalities.makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vinf)
 		A = [row[0] for row in Ab]
 		
@@ -75,22 +76,13 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			print("Found cutting plane: <=", cpDistance)
 			print("Point {} violates it by {}".format(sparselyLabel(pointToSeparate), cpViolation))
 
-			print(cpProb.solution.get_values())
-			print(cpProb.variables.get_names())
-			print(cpVector)
-			print(pointToSeparate)
-
 			A += [cpVector]
 			b += [cpDistance]
-
-			import pprint
-			pprint.pprint(A)
 
 			polytopeProb.linear_constraints.add(
 					lin_expr = [rowToSparsePair(cpVector)], 
 					rhs = [cpDistance],
 					senses = 'L')
-			print(rowToSparsePair(cpVector), cpDistance)
 
 			polytopeProb.set_results_stream(None)
 			polytopeProb.solve()

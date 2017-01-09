@@ -136,11 +136,6 @@ def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vin
 		ret.append((row, 2))
 		ret.append(([-x for x in row], -2))
 
-	# Bounds
-	for i in range(noVariables):
-		row = [0] * noVariables
-		row[i] = -1
-		ret.append((row, 0))
 
 	return ret
 
