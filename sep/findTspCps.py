@@ -40,59 +40,70 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 
 		pointToSeparate = polytopeProb.solution.get_values()
 
-		cpProb = cgsep.makeCgLp(pointToSeparate, A, b, 0.01)
+		# This function takes care of filling in 0s where we have no aXX variables due to lack of support in pointToSeparate
+		def cpVectorFromProb(prob, pointToSeparate):
+			positiveSupport = set((i+1) for i in range(len(pointToSeparate)) if pointToSeparate[i] > 0)
+			return [(prob.solution.get_values('a{}'.format(i)) if i in positiveSupport else 0) for i in range(1, len(variableNames) + 1)]
+
+		# Create a list of pairs omitting zero entries 
+		def sparselyLabel(v):
+			return [(a,b) for a,b in zip(variableNames, v) if b != 0]
+
+		firstTime = True 
 		cpViolation = 1e20
+		while firstTime or  cpViolation > 1e-5:
+			firstTime = False 
 
-		cpProb.set_results_stream(None)
-		cpProb.solve()
-		
-		# Returned cutting  plane is ax >= b, so we need to flip sign
-		# if we want <=
-		cpVector = [-x for x in (cpProb.solution.get_values()[1:len(variableNames) + 1])]
-		# The variables for the cutting plane are of the form "a1, a2, ..., a10",
-		# so just take the suffix and map it to a legible name
-		# Also skip a0
-		cpLabelledVector = list(zip([variableNames[int(internalVariableName[1:]) - 1] for internalVariableName in cpProb.variables.get_names()[1:] if internalVariableName[0] == 'a'],
-				cpVector))
-		cpDistance = -cpProb.solution.get_values()[0]
-		cpViolation = cpProb.solution.get_objective_value()
+			cpProb = cgsep.makeCgLp(pointToSeparate, A, b, 0.01)
+	
+			cpProb.set_results_stream(None)
+			cpProb.solve()
+			cpProb.write('cg.lp')
+	
+			cpVector = [x for x in cpVectorFromProb(cpProb, pointToSeparate)]
+			cpLabelledVector = sparselyLabel(cpVector)
+			cpDistance = cpProb.solution.get_values()[0]
 
-		while cpViolation > 1e-5:
+			if cpProb.solution.get_objective_value() >  cpViolation:
+				print("Violation went up...")
+				break
+
+			cpViolation = cpProb.solution.get_objective_value()
+
 			print("Found cutting plane: ", cpLabelledVector)
 			# print a0
 			print("Found cutting plane: <=", cpDistance)
-			print("Point {} violates it by {}".format(pointToSeparate, cpViolation))
+			print("Point {} violates it by {}".format(sparselyLabel(pointToSeparate), cpViolation))
+
+			print(cpProb.solution.get_values())
+			print(cpProb.variables.get_names())
+			print(cpVector)
+			print(pointToSeparate)
 
 			A += [cpVector]
 			b += [cpDistance]
+
+			import pprint
+			pprint.pprint(A)
+
 			polytopeProb.linear_constraints.add(
 					lin_expr = [rowToSparsePair(cpVector)], 
 					rhs = [cpDistance],
 					senses = 'L')
+			print(rowToSparsePair(cpVector), cpDistance)
 
 			polytopeProb.set_results_stream(None)
 			polytopeProb.solve()
+
+			if not polytopeProb.solution.is_primal_feasible():
+				print("Problem no longer feasible, outputing to bowtie.lp")
+				polytopeProb.write('bowtie.lp')
+				break
+
+
 			pointToSeparate = polytopeProb.solution.get_values()
-			print("New point to separate: ", [(name, value) for name, value in zip(variableNames, pointToSeparate) if value != 0])
+			print("New point to separate: ", sparselyLabel(pointToSeparate))
 			print("Objective value: ", polytopeProb.solution.get_objective_value())
-
-			cpProb = cgsep.makeCgLp(pointToSeparate, A, b, 0.01)
-			cpProb.set_results_stream(None)
-			cpProb.solve()
-
-			# Flip sign since we have ax>=b
-			cpVector = [-x for x in (cpProb.solution.get_values()[1:len(variableNames) + 1])]
-			# The variables for the cutting plane are of the form "a1, a2, ..., a10",
-			# so just take the suffix and map it to a legible name
-			# Also skip a0
-			cpLabelledVector = list(zip([variableNames[int(internalVariableName[1:]) - 1] for internalVariableName in cpProb.variables.get_names()[1:] if internalVariableName[0] == 'a'],
-					cpVector))
-			cpDistance = -cpProb.solution.get_values()[0]
-			cpViolation = cpProb.solution.get_objective_value()
-
-
-
-
 
 	except CplexError as e:
 		print(e, file=sys.stderr)
