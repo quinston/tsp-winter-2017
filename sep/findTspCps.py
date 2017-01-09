@@ -46,13 +46,15 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 		cpProb.set_results_stream(None)
 		cpProb.solve()
 		
-		cpVector = cpProb.solution.get_values()[1:len(variableNames) + 1]
+		# Returned cutting  plane is ax >= b, so we need to flip sign
+		# if we want <=
+		cpVector = [-x for x in (cpProb.solution.get_values()[1:len(variableNames) + 1])]
 		# The variables for the cutting plane are of the form "a1, a2, ..., a10",
 		# so just take the suffix and map it to a legible name
 		# Also skip a0
 		cpLabelledVector = list(zip([variableNames[int(internalVariableName[1:]) - 1] for internalVariableName in cpProb.variables.get_names()[1:] if internalVariableName[0] == 'a'],
 				cpVector))
-		cpDistance = cpProb.solution.get_values()[0]
+		cpDistance = -cpProb.solution.get_values()[0]
 		cpViolation = cpProb.solution.get_objective_value()
 
 		while cpViolation > 1e-5:
@@ -61,13 +63,11 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			print("Found cutting plane: <=", cpDistance)
 			print("Point {} violates it by {}".format(pointToSeparate, cpViolation))
 
-			# Returned cutting  plane is ax >= b, so we need to flip sign
-			# if we want <=
-			A += [[-x for x in cpVector]]
-			b += [-cpDistance]
+			A += [cpVector]
+			b += [cpDistance]
 			polytopeProb.linear_constraints.add(
-					lin_expr = [rowToSparsePair([-x for x in cpVector])], 
-					rhs = [-cpDistance],
+					lin_expr = [rowToSparsePair(cpVector)], 
+					rhs = [cpDistance],
 					senses = 'L')
 
 			polytopeProb.set_results_stream(None)
@@ -80,13 +80,14 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			cpProb.set_results_stream(None)
 			cpProb.solve()
 
-			cpVector = cpProb.solution.get_values()[1:len(variableNames) + 1]
+			# Flip sign since we have ax>=b
+			cpVector = [-x for x in (cpProb.solution.get_values()[1:len(variableNames) + 1])]
 			# The variables for the cutting plane are of the form "a1, a2, ..., a10",
 			# so just take the suffix and map it to a legible name
 			# Also skip a0
 			cpLabelledVector = list(zip([variableNames[int(internalVariableName[1:]) - 1] for internalVariableName in cpProb.variables.get_names()[1:] if internalVariableName[0] == 'a'],
 					cpVector))
-			cpDistance = cpProb.solution.get_values()[0]
+			cpDistance = -cpProb.solution.get_values()[0]
 			cpViolation = cpProb.solution.get_objective_value()
 
 
