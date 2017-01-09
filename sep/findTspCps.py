@@ -73,7 +73,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			polytopeProb.set_results_stream(None)
 			polytopeProb.solve()
 			pointToSeparate = polytopeProb.solution.get_values()
-			print("New point to separate: ", pointToSeparate)
+			print("New point to separate: ", [(name, value) for name, value in zip(variableNames, pointToSeparate) if value != 0])
 			print("Objective value: ", polytopeProb.solution.get_objective_value())
 
 			cpProb = cgsep.makeCgLp(pointToSeparate, A, b, 0.01)
