@@ -41,10 +41,11 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 
 		pointToSeparate = polytopeProb.solution.get_values()
 
-		# This function takes care of filling in 0s where we have no aXX variables due to lack of support in pointToSeparate
-		def cpVectorFromProb(prob, pointToSeparate):
+		# This function takes care of filling in a_{XX} <- u^T A_{XX} where we had previously omitted a_{XX} variables  from the CG-cut system due to no positive support in pointToSeparate
+		def cpVectorFromProb(prob, pointToSeparate, A):
 			positiveSupport = set((i+1) for i in range(len(pointToSeparate)) if pointToSeparate[i] > 0)
-			return [(prob.solution.get_values('a{}'.format(i)) if i in positiveSupport else 0) for i in range(1, len(variableNames) + 1)]
+			u = [prob.solution.get_values('u{}'.format(i)) for i in range(1, len(A)+1)]
+			return [(prob.solution.get_values('a{}'.format(i)) if i in positiveSupport else sum(u[j] * row[i-1] for j,row in enumerate(A))) for i in range(1, len(variableNames) + 1)]
 
 		# Create a list of pairs omitting zero entries 
 		def sparselyLabel(v):
@@ -56,18 +57,14 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			firstTime = False 
 
 			cpProb = cgsep.makeCgLp(pointToSeparate, A, b, 0.01)
+			cpProb.write('cg.lp')
 	
 			cpProb.set_results_stream(None)
 			cpProb.solve()
-			cpProb.write('cg.lp')
 	
-			cpVector = [x for x in cpVectorFromProb(cpProb, pointToSeparate)]
+			cpVector = [x for x in cpVectorFromProb(cpProb, pointToSeparate, A)]
 			cpLabelledVector = sparselyLabel(cpVector)
 			cpDistance = cpProb.solution.get_values()[0]
-
-			if cpProb.solution.get_objective_value() >  cpViolation:
-				print("Violation went up...")
-				break
 
 			cpViolation = cpProb.solution.get_objective_value()
 
@@ -75,6 +72,8 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			# print a0
 			print("Found cutting plane: <=", cpDistance)
 			print("Point {} violates it by {}".format(sparselyLabel(pointToSeparate), cpViolation))
+			print(cpProb.solution.get_values())
+			print(cpProb.variables.get_names())
 
 			A += [cpVector]
 			b += [cpDistance]
@@ -99,4 +98,5 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 
 	except CplexError as e:
 		print(e, file=sys.stderr)
+		raise e
 
