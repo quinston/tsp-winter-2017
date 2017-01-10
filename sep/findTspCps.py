@@ -72,6 +72,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			print("Found cutting plane: ", cpLabelledVector)
 			# print a0
 			print("Found cutting plane: <=", cpDistance)
+			print("Linear combination is: {}".format("\n".join("{} * [{} <= {}]".format(cpProb.solution.get_values("u{}".format(j+1)), row, b[j]) for j,row in enumerate(A) if cpProb.solution.get_values("u{}".format(j+1)) != 0)))
 			print("Point {} violates it by {}".format(sparselyLabel(pointToSeparate), cpViolation))
 
 			A += [cpVector]
