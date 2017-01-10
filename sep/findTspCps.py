@@ -6,6 +6,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 	from cplex.exceptions import CplexError
 	import cgsep
 	import inequalities
+	import math
 
 	variableNames = inequalities.enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf)
 
@@ -45,7 +46,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 		def cpVectorFromProb(prob, pointToSeparate, A):
 			positiveSupport = set((i+1) for i in range(len(pointToSeparate)) if pointToSeparate[i] > 0)
 			u = [prob.solution.get_values('u{}'.format(i)) for i in range(1, len(A)+1)]
-			return [(prob.solution.get_values('a{}'.format(i)) if i in positiveSupport else sum(u[j] * row[i-1] for j,row in enumerate(A))) for i in range(1, len(variableNames) + 1)]
+			return [(prob.solution.get_values('a{}'.format(i)) if i in positiveSupport else math.floor(sum(u[j] * row[i-1] for j,row in enumerate(A)))) for i in range(1, len(variableNames) + 1)]
 
 		# Create a list of pairs omitting zero entries 
 		def sparselyLabel(v):
