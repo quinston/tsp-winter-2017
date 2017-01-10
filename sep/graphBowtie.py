@@ -10,4 +10,8 @@ weights = {(1,2): 10, (1,3): 10, (1,5): 1, (2,3): 10, (2,6): 1, (3,4): 1, (4,5):
 vinf = 3
 
 import findTspCps
-findTspCps.findCps(V, E, Vstar, Estar, vinf, weights)
+
+for vinf in V:
+	print("\nvinf = {}".format(vinf))
+	findTspCps.findCps(V, E, Vstar, Estar, vinf, weights)
+
