@@ -9,6 +9,9 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 	import math
 
 	variableNames = inequalities.enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf)
+	# Create a list of pairs omitting zero entries 
+	def sparselyLabel(v):
+		return [(a,b) for a,b in zip(variableNames, v) if b != 0]
 
 	objectiveFunction = None
 	if weights == None:
@@ -45,6 +48,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			return
 
 		pointToSeparate = polytopeProb.solution.get_values()
+		print('Initial point: {}'.format(sparselyLabel(pointToSeparate)))
 
 		# This function takes care of filling in a_{XX} <- u^T A_{XX} where we had previously omitted a_{XX} variables  from the CG-cut system due to no positive support in pointToSeparate
 		def cpVectorFromProb(prob, pointToSeparate, A):
@@ -52,9 +56,6 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			u = [prob.solution.get_values('u{}'.format(i)) for i in range(1, len(A)+1)]
 			return [(prob.solution.get_values('a{}'.format(i)) if i in positiveSupport else math.floor(sum(u[j] * row[i-1] for j,row in enumerate(A)))) for i in range(1, len(variableNames) + 1)]
 
-		# Create a list of pairs omitting zero entries 
-		def sparselyLabel(v):
-			return [(a,b) for a,b in zip(variableNames, v) if b != 0]
 
 		firstTime = True 
 		cpViolation = 1e20
