@@ -61,6 +61,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			cpProb.write('cg.lp')
 	
 			cpProb.set_results_stream(None)
+			print("Finding a cutting plane...")
 			cpProb.solve()
 	
 			cpVector = [x for x in cpVectorFromProb(cpProb, pointToSeparate, A)]
