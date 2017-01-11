@@ -39,6 +39,10 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 
 		polytopeProb.set_results_stream(None)
 		polytopeProb.solve()
+		if not polytopeProb.solution.is_primal_feasible():
+			print('Original subtour polytope is empty, outputing to polytope.lp')
+			polytopeProb.write('polytope.lp')
+			return
 
 		pointToSeparate = polytopeProb.solution.get_values()
 
@@ -88,8 +92,8 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			polytopeProb.solve()
 
 			if not polytopeProb.solution.is_primal_feasible():
-				print("Problem no longer feasible, outputing to bowtie.lp")
-				polytopeProb.write('bowtie.lp')
+				print("Problem no longer feasible, outputing to polytope.lp")
+				polytopeProb.write('polytope.lp')
 				break
 
 

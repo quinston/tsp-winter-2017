@@ -35,3 +35,11 @@ list(range(1,25+1)),
 [(a,a+1,a+5,a+6) for a in range(1,4+1)] +[(a,a+1,a+5,a+6) for a in range(6, 9+1)] +[(a,a+1,a+5,a+6) for a in range(11,14+1)] +[(a,a+1,a+5,a+6) for a in range(16, 19+1)] +[(1,2,3,4,5,10,15,20,25,24,23,22,21,16,11,6)],
 [(a, 17) for a in range(1,4+1)] + [(1,17)] + [(a-1, a) for a in range(2,4+1)] + [(4,17)] + [(a,a+4) for a in range(1,4+1)] + [(5,17)] + [(a-1, a) for a in range(6,8+1)] + [(8,17)] + [(a,a+4) for a in range(5,8+1)] + [(9,17)] + [(a-1, a) for a in range(10,12+1)] + [(12,17)] + [(a,a+4) for a in range(9,12+1)] + [(13,17)] + [(a-1, a) for a in range(14,16+1)] + [(16,17)] + [(a,17) for a in range(13,16+1)]))
 
+
+	def test_gridGraphEulersFormula(self):
+		V, E, Vstar, Estar = gridGraph.gridGraph(5)
+		self.assertEqual(len(V), 25)
+		self.assertEqual(len(E), 4+5+4+5+4+5+4+5+4)
+		self.assertEqual(len(Vstar), 17)
+		self.assertEqual(len(Estar), len(E))
+		self.assertEqual(len(V)-len(E)+len(Vstar), 2)
