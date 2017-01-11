@@ -1,5 +1,6 @@
 
 import itertools
+import sys
 
 """
 Makes a grid graph of dimension k by k
@@ -30,3 +31,11 @@ for a in range((k-1)+1, (k-1)*(k-1), k-1)
 [(a, lastFace) for a in range((k-2) * (k-1) + 1, (k-1)*(k-1) + 1)]
 ))
 )
+
+if __name__ == '__main__':
+	V, E, Vstar, Estar = gridGraph(int(sys.argv[1]))
+	vinf = int(sys.argv[2])
+	weights = dict(itertools.product(E, (1,)))
+
+	import findTspCps
+	findTspCps.findCps(V, E, Vstar, Estar, vinf, weights)
