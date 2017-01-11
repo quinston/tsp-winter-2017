@@ -35,8 +35,10 @@ def makeCgLp(x, A, b, d):
 			obj = 
 # -1 * a0, aj *  x^*_j, ... 
 [-1] + [x[i-1] for i in support] + 
-# slack and coefficient variables don't appear in objective
-([0] * (len(slackVariables) + len(coefficientVariables))),
+# slack variables  don't appear in objective
+([0] * len(slackVariables)) +
+# punish dense coefficients
+([-1e-1] * len(coefficientVariables)),
 			types = 
 # cut variables are integer
 [prob.variables.type.integer] * len(variables) + 
