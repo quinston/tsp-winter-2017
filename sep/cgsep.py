@@ -30,6 +30,8 @@ def makeCgLp(x, A, b, d):
 
 	prob = cplex.Cplex()
 	try:
+		# Set maximum branch nodes 
+		prob.parameters.mip.limits.nodes.set(1000)
 		prob.objective.set_sense(prob.objective.sense.maximize)
 		prob.variables.add(names = variables + slackVariables + coefficientVariables, 
 			obj = 
@@ -38,7 +40,7 @@ def makeCgLp(x, A, b, d):
 # slack variables  don't appear in objective
 ([0] * len(slackVariables)) +
 # punish dense coefficients
-([-1e-1] * len(coefficientVariables)),
+([-1e-4] * len(coefficientVariables)),
 			types = 
 # cut variables are integer
 [prob.variables.type.integer] * len(variables) + 
@@ -48,12 +50,12 @@ def makeCgLp(x, A, b, d):
 # cut variables are free
 [-cplex.infinity] * len(variables) +
 # coefficient variables and slack variables are >=0
-[0] * (len(slackVariables) + len(coefficientVariables)),
+[0] * len(slackVariables) + [0] * len(coefficientVariables),
 			ub = 
 # cut variables are free
 [cplex.infinity] * len(variables) +
 # slack and coefficient varaibels are <= 1-d
-[1-d] * (len(slackVariables) + len(coefficientVariables)),
+[1-d] * len(slackVariables) + [1-d] * len(coefficientVariables),
 )
 
 		# Set up slack variables
