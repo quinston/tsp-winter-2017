@@ -41,10 +41,10 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 		polytopeProb.linear_constraints.add(lin_expr = Alol, rhs = b, senses = 'L' * len(b)) 
 
 		polytopeProb.set_results_stream(None)
+		polytopeProb.write('polytope.lp')
 		polytopeProb.solve()
 		if not polytopeProb.solution.is_primal_feasible():
-			print('Original subtour polytope is empty, outputing to polytope.lp')
-			polytopeProb.write('polytope.lp')
+			print('Original subtour polytope is empty')
 			return
 
 		pointToSeparate = polytopeProb.solution.get_values()
@@ -57,10 +57,9 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			return [(prob.solution.get_values('a{}'.format(i)) if i in positiveSupport else math.floor(sum(u[j] * row[i-1] for j,row in enumerate(A)))) for i in range(1, len(variableNames) + 1)]
 
 
-		firstTime = True 
+		noCuttingPlanes = 0
 		cpViolation = 1e20
-		while firstTime or  cpViolation > 1e-5:
-			firstTime = False 
+		while noCuttingPlanes == 0 or  cpViolation > 1e-5:
 
 			cpProb = cgsep.makeCgLp(pointToSeparate, A, b, 0.01)
 			cpProb.write('cg.lp')
@@ -90,6 +89,8 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 					senses = 'L')
 
 			polytopeProb.set_results_stream(None)
+			noCuttingPlanes += 1
+			polytopeProb.write('polytope.cut{}.lp'.format(noCuttingPlanes))
 			polytopeProb.solve()
 
 			if not polytopeProb.solution.is_primal_feasible():
