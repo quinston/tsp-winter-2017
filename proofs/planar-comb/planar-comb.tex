@@ -1,0 +1,83 @@
+\documentclass{memoir}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{commath}
+\newtheorem{theorem}{Theorem}
+
+\begin{document}
+Let $v_\infty \in V$.
+Fix a planar embedding of $G=(V,E)$ and $G^* = (V^*, E^*)$.
+
+\begin{theorem}
+Consider variables $x_e$ for all $e\in E$. 
+Consider also variables $z_{e,v}$ for all $e\in E\setminus\delta(v_\infty)$
+and $v\in V^*$ with $v\in e^*$.
+
+The following with the projection map to $x$-variables is an extended formulation of SEP.
+
+\begin{align}
+x_e + z_{e,v}+z_{e,u} &= 1 & v_\infty \not\in e \in E, e^* = \cbr{u,v} \in V^* \label{oneuse} \\
+\sum_{e\in\delta(v)} z_{e,v} &= 1 & v\in V^*, \text{$v$ is not incident to $v$} \label{facedegree} \\
+x(\delta(v)) &= 2 & v\in V \label{vertexdegree} \\
+(x,z) &\geq 0
+\end{align}
+\end{theorem}
+
+
+\begin{theorem}
+For $S\subseteq E$, define
+
+$$z(S) = \sum_{\substack{v_\infty\not\in e\in S \\ e^* = \cbr{u,v}}} z_{e,u} + z_{e,v}$$
+
+For $S\subseteq V$, define 
+
+$$z(\partial^-(S)) = \sum_{\substack{e \in \delta(S) \\ e^* = \cbr{u,v} \\ \text{$v$ is in a face of $G[S]$ that contains $v_\infty$ in its interior}}} z_{e,v}$$
+
+
+Let $(H, T_1, \cdots, T_k)$ be a comb with the property that for any $S\in\cbr{H, T_1,\cdots, T_k}$, $G[S]$ and $G[V\setminus S]$ are both connected. If any of these sets $S$ contains $v_\infty$,
+replace it with $V\setminus S$.
+The following is a Chv\'{a}tal cut on the extended formulation of SEP.
+
+$$z(\partial^-(H)) +  \sum_{i=1}^k z(\partial^-(T_i)) \geq \frac{3k-3}{2} - \del{\abs{H} + \sum_{i=1}^k \abs{T_i}}$$
+
+
+
+\end{theorem}
+
+\begin{proof}
+Let $S$ be any of $H, T_1,\cdots, T_k$. Note that $v_\infty\not\in S$.
+
+\begin{align*}
+&\phantom{{}={}} x(\delta(S)) - 2z(\gamma(S)) \\ 
+&= \del{\sum_{v\in S} x(\delta(v)) - 2x(\gamma(S))} - 2z(\gamma(S))\\
+&= 2\abs{S} - 2x(\gamma(S)) - 2z(\gamma(S)) \tag*{by \eqref{vertexdegree}} \\
+&= 2\abs{S} - 2\del{x(\gamma(S)) + z(\gamma(S))} \\
+&= 2\abs{S} - 2\del{\sum_{e = \cbr{u,v}\in \gamma(S)} x_e + z_{e,u} + z_{e,v} } \\
+&= 2\abs{S} - 2\abs{\gamma(S)} \tag*{by \eqref{oneuse} since $v_\infty\not\in S$ and hence $\delta(v_\infty)\cap \gamma(S) = \varnothing$} \\
+&= 2\del{\abs{S}-\abs{\gamma(S)}} \\
+&= 2\del{2 - \abs{F(G[S])}} \tag*{by Euler's formula} \\ 
+z(\gamma(S)) &= \frac{1}{2}x(\delta(S)) - 2 + \abs{F(G[S])} \\
+z(\gamma(S)) - \abs{F(G[S])} &= \frac{1}{2}x(\delta(S)) - 2
+\end{align*}
+
+Now, since $G[S]$ and $G[V\setminus S]$ are connected, at most one face $f$ of $F(G[S])$ is not a face of $G$. Since $v_\infty\not\in S$, $v_\infty$ is contained in the interior of $f$.
+
+Note that
+\begin{align*}
+z(\gamma(S)) - \abs{F(G[S])} &= z(\gamma(S)) - \sum_{v \in F(G[S])} 1 \\
+&= z(\gamma(S)) - 1 - \sum_{\substack{v \in F(G[S]) \\ v\neq f}} \sum_{e\in\delta(v)} z_{e,v} \tag*{by \eqref{facedegree}} \\
+&= z(\partial^-(S)) - 1 \\
+z(\partial^-(S)) &= \frac{1}{2}x(\delta(S)) - 1
+\end{align*}
+
+Summing over handles and teeth and applying the comb inequality:
+
+\begin{align*}
+z(\partial^-(H)) + \sum_{i=1}^k z(\partial^-(T_i)) &\geq \frac{1}{2}(3k+1) - (k+1) \\
+&= \frac{k-1}{2}
+\end{align*}
+
+Then add one for some reason lol
+\end{proof}
+\end{document}
