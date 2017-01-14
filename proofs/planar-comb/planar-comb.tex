@@ -86,6 +86,12 @@ z(\partial^-(H)) + \sum_{i=1}^k z(\partial^-(T_i)) &\geq \frac{1}{2}(3k+1) - (k+
 \begin{example}
 	Consider $\texttt{bowtieGraph.py}$ with $v_\infty = p_6$. 
 	It has noninteger optimum $\del{x_1=x_2=x_4=x_7=x_8=x_9=z_{1,1}=z_{2,2}=z_{4,1}=z_{7,2} = \frac{1}{2}, x_4=x_5=x_6 = 1}$.
+	The following is a cutting plane:
+
+	\begin{verbatim}
+	z1,5+z2,2+z4,3+z3,2+z3,5+z6,2+z6,3+z2,1+z3,5+z6,3+z7,4 >= 1
+	\end{verbatim}
+
 	Let
 
 	\begin{align*}
@@ -96,12 +102,8 @@ z(\partial^-(H)) + \sum_{i=1}^k z(\partial^-(T_i)) &\geq \frac{1}{2}(3k+1) - (k+
 	\end{align*}
 
 	Then $\del{H,T_1,T_2,T_3}$ is a comb. Since $v_\infty = p_6 \in T_3$, we replace
-	$T_3$ with $V\setminus T_3$. Then the following is a cutting plane:
-
-	\begin{verbatim}
-	z1,5+z2,2+z4,3+z3,2+z3,5+z6,2+z6,3+z2,1+z3,5+z6,3+z7,4 >= 1
-	\end{verbatim}
-
+	$T_3$ with $V\setminus T_3$.  
+	
 	Accordingly,
 
 	\begin{align*}
