@@ -78,7 +78,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 					rhs=[0] * len(edges), 
 					senses='E' * len(edges))
 
-			# force z_e,v >= 0
+			# force (-z_e,v <= 0)  z_e,v >= 0
 			cpProb.linear_constraints.add(
 					lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
 						val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(variableNames)+1)],
@@ -120,7 +120,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			print("Found cutting plane: ", cpLabelledVector)
 			# print a0
 			print("Found cutting plane: <=", cpDistance)
-			print("Linear combination is: \n{}".format("+".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
+			#print("Linear combination is: \n{}".format("+".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
 			# print("Point {} violates it by {}".format(sparselyLabel(pointToSeparate), cpViolation))
 
 			A += [cpVector]
