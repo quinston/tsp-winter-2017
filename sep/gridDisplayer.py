@@ -5,10 +5,8 @@ root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
 class GridGraph(Canvas):
-	def __init__(self, master, width=6, data={}):
+	def __init__(self, master, width, vinf, data):
 		super().__init__(master, width=1000, height=1000)
-
-		self.data = data
 
 		self.GRID_WIDTH = width
 		self.CELL_PIXEL_WIDTH = 100
@@ -16,15 +14,29 @@ class GridGraph(Canvas):
 		self.TOP_LEFT_CORNER = (30, 30)
 
 		for i in range(1, (2*width - 1) * (width - 1) + (width-1) + 1):
-			self.drawEdge(i)
-			self.drawArcs(i)
+			self.drawEdge(i, data)
+			self.drawArcs(i, data)
+
+		self.drawVinf(vinf)
+
+	def drawVinf(self, v):
+		horizontalPosition = (v-1) % self.GRID_WIDTH
+		verticalPosition = (v-1) // self.GRID_WIDTH
+		radius  = 5
+		self.create_oval(self.TOP_LEFT_CORNER[0] - 2*radius +  self.CELL_PIXEL_WIDTH * horizontalPosition,
+				self.TOP_LEFT_CORNER[1] - 2*radius + self.CELL_PIXEL_WIDTH * verticalPosition,
+				self.TOP_LEFT_CORNER[0] + 2*radius + self.CELL_PIXEL_WIDTH * horizontalPosition,
+				self.TOP_LEFT_CORNER[1] + 2*radius + self.CELL_PIXEL_WIDTH * verticalPosition,
+				outline="blue",
+				width=3)
+		pass
 
 		
-	def drawEdge(self, e):
+	def drawEdge(self, e, data):
 		# don't draw void edges
-		if self.data["e{}".format(e)] == 0:
+		if data["e{}".format(e)] == 0:
 			return
-		lineColour = "#{:02x}0000".format(int(255 * (1 - self.data["e{}".format(e)])))
+		lineColour = "#{:02x}0000".format(int(255 * (1 - data["e{}".format(e)])))
 		if (e-1) % (self.GRID_WIDTH * 2 - 1) < (self.GRID_WIDTH - 1):
 			# Horizontal line
 			horizontalPosition = (e-1) % (self.GRID_WIDTH * 2 - 1)
@@ -46,8 +58,7 @@ class GridGraph(Canvas):
 					fill=lineColour,
 					width=3)
 
-	def drawArcs(self, e):
-		# don't draw void or nonexistent arcs
+	def drawArcs(self, e, data):
 		isVertical = (e-1) % (self.GRID_WIDTH * 2 - 1) < (self.GRID_WIDTH - 1)
 		isExterior = (((e-1) % (self.GRID_WIDTH * 2 - 1)) in [self.GRID_WIDTH - 1, self.GRID_WIDTH * 2 - 2]) or (((e-1) // (self.GRID_WIDTH * 2 - 1)) in [0, self.GRID_WIDTH])
 		unboundedFace = (self.GRID_WIDTH - 1)**2 + 1
@@ -69,8 +80,8 @@ class GridGraph(Canvas):
 
 			for face, direction, offset in ((upFace, "last", self.CELL_PIXEL_WIDTH//3), (downFace, "first", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
-				if edgeName in self.data and self.data[edgeName] > 0:
-					lineColour = "#00{:02x}00".format(int(255 * (1 - self.data[edgeName])))
+				if edgeName in data and data[edgeName] > 0:
+					lineColour = "#00{:02x}00".format(int(255 * (1 - data[edgeName])))
 				
 					self.create_line(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition,
 							self.TOP_LEFT_CORNER[1] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
@@ -100,8 +111,8 @@ class GridGraph(Canvas):
 
 			for face, direction, offset in ((leftFace, "last", self.CELL_PIXEL_WIDTH//3), (rightFace, "first", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
-				if edgeName in self.data and self.data[edgeName] > 0:
-					lineColour = "#00{:02x}00".format(int(255 * (1 - self.data[edgeName])))
+				if edgeName in data and data[edgeName] > 0:
+					lineColour = "#00{:02x}00".format(int(255 * (1 - data[edgeName])))
 				
 					self.create_line(self.TOP_LEFT_CORNER[0] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
 							self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
@@ -115,7 +126,7 @@ class GridGraph(Canvas):
 				
 
 if __name__ == '__main__':
-	g1 = GridGraph(root, width=3, data={
+	g1 = GridGraph(root, width=3, vinf=9, data={
 		"e1": 1,
 		"e2": 0.9,
 		"e3": 0.8,
