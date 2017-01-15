@@ -78,6 +78,25 @@ class GridGraph(Canvas):
 					self.TOP_LEFT_CORNER[1] + (self.ARROW_PIXEL_LENGTH//2) + self.CELL_PIXEL_WIDTH * verticalPosition,
 					arrow = "first")
 
+		else:
+			# horizontal
+			horizontalPosition = ((e-1) % (self.GRID_WIDTH * 2 - 1)) - (self.GRID_WIDTH - 1)
+			verticalPosition = (e-1) // (self.GRID_WIDTH * 2 - 1)
+
+			leftFace, rightFace = (0,0)
+			if horizontalPosition == 0:
+				leftFace = unboundedFace
+				rightFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+			elif horizontalPosition == self.GRID_WIDTH - 1:
+				leftFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition 
+				rightFace = unboundedFace
+			else:
+				leftFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition 
+				rightFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+
+			print("direct {} left {} right {}".format(e, leftFace, rightFace))
+				
+
 
 g1 = GridGraph(root, width=6, data=dict((("e{}".format(i), 1) for i in range(1, 60+1))))
 g1.grid(row=0, column=0, sticky=(N,E,W,S))
