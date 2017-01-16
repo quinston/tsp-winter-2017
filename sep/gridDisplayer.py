@@ -1,8 +1,5 @@
 from tkinter import *
 
-root = Tk()
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
 
 class GridGraph(Canvas):
 	def __init__(self, master, width, vinf, data):
@@ -34,7 +31,7 @@ class GridGraph(Canvas):
 		
 	def drawEdge(self, e, data):
 		# don't draw void edges
-		edgeName = "e{}".format(e)
+		edgeName = "x{}".format(e)
 
 		if edgeName not in data or data[edgeName] == 0:
 			lineColour = "#ccc"
@@ -132,28 +129,18 @@ class GridGraph(Canvas):
 						width=3)
 
 
-				
+def displayGrid(width, vinf, data):
+	root = Tk()
+	root.columnconfigure(0, weight=1)
+	root.rowconfigure(0, weight=1)
+	g1 = GridGraph(root, width=width, vinf=vinf, data=data)
+	g1.grid(row=0, column=0, sticky=(N,E,W,S))
+	root.mainloop()
+
 
 if __name__ == '__main__':
-	g1 = GridGraph(root, width=3, vinf=9, data={
-		"e1": 1,
-		"e2": 0.9,
-		"e3": 0.8,
-		"e4": 0.7,
-		"e5": 0.6,
-		"e5": 0.5,
-		"e6": 0.4,
-		"e7": 0.3,
-		"e8": 0.2,
-		"e9": 0.1,
-		"e10": 0,
-		"e11": 1,
-		"e12": 0.5,
-		"z1,1": 0.5,
-		"z1,5": 0.4,
-		"z3,5": 0.1,
-		"z3,1": 1
-		})
-	g1.grid(row=0, column=0, sticky=(N,E,W,S))
-	
-	root.mainloop()
+	while True:
+		width = int(input('Grid width: '))
+		vinf = int(input('vinf: '))
+		data = dict(eval(input('data: ')))
+		displayGrid(width, vinf, data)
