@@ -34,9 +34,12 @@ class GridGraph(Canvas):
 		
 	def drawEdge(self, e, data):
 		# don't draw void edges
-		if data["e{}".format(e)] == 0:
-			return
-		lineColour = "#{:02x}0000".format(int(255 * (1 - data["e{}".format(e)])))
+		edgeName = "e{}".format(e)
+
+		if edgeName not in data or data[edgeName] == 0:
+			lineColour = "#ccc"
+		else:
+			lineColour = "#{:02x}0000".format(int(255 * (1 - data[edgeName])))
 		if (e-1) % (self.GRID_WIDTH * 2 - 1) < (self.GRID_WIDTH - 1):
 			# Horizontal line
 			horizontalPosition = (e-1) % (self.GRID_WIDTH * 2 - 1)
@@ -80,16 +83,19 @@ class GridGraph(Canvas):
 
 			for face, direction, offset in ((upFace, "last", self.CELL_PIXEL_WIDTH//3), (downFace, "first", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
+
 				if edgeName in data and data[edgeName] > 0:
 					lineColour = "#00{:02x}00".format(int(255 * (1 - data[edgeName])))
+				else:
+					lineColour = "#ccc"
 				
-					self.create_line(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition,
-							self.TOP_LEFT_CORNER[1] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
-							self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition,
-							self.TOP_LEFT_CORNER[1] + (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
-							arrow = direction,
-							fill = lineColour,
-							width=3)
+				self.create_line(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
+						self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
+						arrow = direction,
+						fill = lineColour,
+						width=3)
 
 		else:
 			# horizontal
@@ -111,16 +117,19 @@ class GridGraph(Canvas):
 
 			for face, direction, offset in ((leftFace, "last", self.CELL_PIXEL_WIDTH//3), (rightFace, "first", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
+
 				if edgeName in data and data[edgeName] > 0:
 					lineColour = "#00{:02x}00".format(int(255 * (1 - data[edgeName])))
+				else:
+					lineColour = "#ccc"
 				
-					self.create_line(self.TOP_LEFT_CORNER[0] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
-							self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
-							self.TOP_LEFT_CORNER[0] + (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
-							self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
-							arrow = direction,
-							fill = lineColour,
-							width=3)
+				self.create_line(self.TOP_LEFT_CORNER[0] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
+						self.TOP_LEFT_CORNER[0] + (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
+						arrow = direction,
+						fill = lineColour,
+						width=3)
 
 
 				
