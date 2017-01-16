@@ -47,6 +47,6 @@ if __name__ == '__main__':
 	import findTspCps
 	i = 0
 	for (cp, _, x) in findTspCps.findCps(V, E, Vstar, Estar, vinf, weights):
-		outputGridDisplayerFormat("grid.cp{}".format(i), cp)
+		outputGridDisplayerFormat("grid.cp{}".format(i), [(a,-b) for a,b in cp])
 		outputGridDisplayerFormat("grid.point{}".format(i), x)
 

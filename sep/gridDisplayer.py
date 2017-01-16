@@ -6,7 +6,7 @@ class GridGraph(Canvas):
 		super().__init__(master, width=1000, height=1000)
 
 		self.GRID_WIDTH = width
-		self.CELL_PIXEL_WIDTH = 100
+		self.CELL_PIXEL_WIDTH = 130
 		self.ARROW_PIXEL_LENGTH = self.CELL_PIXEL_WIDTH // 2
 		self.TOP_LEFT_CORNER = (30, 30)
 		self.VOID_COLOUR = "#f0f0f0"
@@ -16,6 +16,9 @@ class GridGraph(Canvas):
 			self.drawArcs(i, data)
 
 		self.drawVinf(vinf)
+
+	def formatNumber(num):
+		return "{:.3f}".format(num)
 
 	def drawVinf(self, v):
 		horizontalPosition = (v-1) % self.GRID_WIDTH
@@ -54,7 +57,7 @@ class GridGraph(Canvas):
 					width=3)
 			# draw edge weight on centre of edge
 			if not isVoid and data[edgeName] != 1:
-				self.create_text(self.TOP_LEFT_CORNER[0] + int(self.CELL_PIXEL_WIDTH * (horizontalPosition + 0.5)), self.TOP_LEFT_CORNER[1] + self.CELL_PIXEL_WIDTH * verticalPosition, text=str(data[edgeName]), fill='blue')
+				self.create_text(self.TOP_LEFT_CORNER[0] + int(self.CELL_PIXEL_WIDTH * (horizontalPosition + 0.5)), self.TOP_LEFT_CORNER[1] + self.CELL_PIXEL_WIDTH * verticalPosition, text=GridGraph.formatNumber(data[edgeName]), fill='blue')
 
 		else:
 			horizontalPosition = ((e-1) % (self.GRID_WIDTH * 2 - 1)) - (self.GRID_WIDTH - 1)
@@ -68,7 +71,7 @@ class GridGraph(Canvas):
 					width=3)
 			# draw edge weight on centre of edge
 			if not isVoid and data[edgeName] != 1:
-				self.create_text(self.TOP_LEFT_CORNER[0] + self.CELL_PIXEL_WIDTH * horizontalPosition, self.TOP_LEFT_CORNER[1] + int(self.CELL_PIXEL_WIDTH * (verticalPosition + 0.5)), text=str(data[edgeName]), fill='blue')
+				self.create_text(self.TOP_LEFT_CORNER[0] + self.CELL_PIXEL_WIDTH * horizontalPosition, self.TOP_LEFT_CORNER[1] + int(self.CELL_PIXEL_WIDTH * (verticalPosition + 0.5)), text=GridGraph.formatNumber(data[edgeName]), fill='blue')
 
 	def drawArcs(self, e, data):
 		isVertical = (e-1) % (self.GRID_WIDTH * 2 - 1) < (self.GRID_WIDTH - 1)
@@ -112,8 +115,9 @@ class GridGraph(Canvas):
 
 				if not isVoid and data[edgeName] != 1:
 					self.create_text(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition, 
-					self.TOP_LEFT_CORNER[1] + (self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * verticalPosition,
- text=str(data[edgeName]), fill='blue')
+					# stagger the text for vertical arrow pairs
+					self.TOP_LEFT_CORNER[1] + ((1 if direction == "first" else -1) * self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * verticalPosition,
+ text=GridGraph.formatNumber(data[edgeName]), fill='blue')
 
 		else:
 			# horizontal
@@ -154,7 +158,7 @@ class GridGraph(Canvas):
 				if not isVoid and data[edgeName] != 1:
 					self.create_text(self.TOP_LEFT_CORNER[0] + (self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * horizontalPosition,
 						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
- text=str(data[edgeName]), fill='blue')
+ text="{:.3f}".format(data[edgeName]), fill='blue')
 
 
 def displayGrid(width, vinf, data):
