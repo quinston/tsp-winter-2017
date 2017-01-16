@@ -9,6 +9,7 @@ class GridGraph(Canvas):
 		self.CELL_PIXEL_WIDTH = 100
 		self.ARROW_PIXEL_LENGTH = self.CELL_PIXEL_WIDTH // 2
 		self.TOP_LEFT_CORNER = (30, 30)
+		self.VOID_COLOUR = "#f0f0f0"
 
 		for i in range(1, (2*width - 1) * (width - 1) + (width-1) + 1):
 			self.drawEdge(i, data)
@@ -33,10 +34,14 @@ class GridGraph(Canvas):
 		# don't draw void edges
 		edgeName = "x{}".format(e)
 
-		if edgeName not in data or data[edgeName] == 0:
-			lineColour = "#ccc"
+		isVoid = edgeName not in data or data[edgeName] == 0
+		if isVoid:
+			lineColour = self.VOID_COLOUR
 		else:
-			lineColour = "#{:02x}0000".format(int(255 * (1 - data[edgeName])))
+			if data[edgeName] == 1:
+				lineColour = "black"
+			else:
+				lineColour = "red"
 		if (e-1) % (self.GRID_WIDTH * 2 - 1) < (self.GRID_WIDTH - 1):
 			# Horizontal line
 			horizontalPosition = (e-1) % (self.GRID_WIDTH * 2 - 1)
@@ -47,6 +52,10 @@ class GridGraph(Canvas):
 					self.TOP_LEFT_CORNER[1] + self.CELL_PIXEL_WIDTH * verticalPosition,
 					fill=lineColour,
 					width=3)
+			# draw edge weight on centre of edge
+			if not isVoid and data[edgeName] != 1:
+				self.create_text(self.TOP_LEFT_CORNER[0] + int(self.CELL_PIXEL_WIDTH * (horizontalPosition + 0.5)), self.TOP_LEFT_CORNER[1] + self.CELL_PIXEL_WIDTH * verticalPosition, text=str(data[edgeName]), fill='blue')
+
 		else:
 			horizontalPosition = ((e-1) % (self.GRID_WIDTH * 2 - 1)) - (self.GRID_WIDTH - 1)
 			verticalPosition = ((e-1) // (self.GRID_WIDTH * 2 - 1)) 
@@ -57,6 +66,9 @@ class GridGraph(Canvas):
 					self.TOP_LEFT_CORNER[1] + self.CELL_PIXEL_WIDTH * (verticalPosition + 1),
 					fill=lineColour,
 					width=3)
+			# draw edge weight on centre of edge
+			if not isVoid and data[edgeName] != 1:
+				self.create_text(self.TOP_LEFT_CORNER[0] + self.CELL_PIXEL_WIDTH * horizontalPosition, self.TOP_LEFT_CORNER[1] + int(self.CELL_PIXEL_WIDTH * (verticalPosition + 0.5)), text=str(data[edgeName]), fill='blue')
 
 	def drawArcs(self, e, data):
 		isVertical = (e-1) % (self.GRID_WIDTH * 2 - 1) < (self.GRID_WIDTH - 1)
@@ -80,11 +92,15 @@ class GridGraph(Canvas):
 
 			for face, direction, offset in ((upFace, "last", self.CELL_PIXEL_WIDTH//3), (downFace, "first", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
+				isVoid = edgeName not in data or data[edgeName] == 0
 
-				if edgeName in data and data[edgeName] > 0:
-					lineColour = "#00{:02x}00".format(int(255 * (1 - data[edgeName])))
+				if not isVoid:
+					if data[edgeName] != 1:
+						lineColour = "green"
+					else:
+						lineColour = "black"
 				else:
-					lineColour = "#ccc"
+					lineColour = self.VOID_COLOUR
 				
 				self.create_line(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition,
 						self.TOP_LEFT_CORNER[1] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
@@ -93,6 +109,11 @@ class GridGraph(Canvas):
 						arrow = direction,
 						fill = lineColour,
 						width=3)
+
+				if not isVoid and data[edgeName] != 1:
+					self.create_text(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition, 
+					self.TOP_LEFT_CORNER[1] + (self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * verticalPosition,
+ text=str(data[edgeName]), fill='blue')
 
 		else:
 			# horizontal
@@ -110,15 +131,17 @@ class GridGraph(Canvas):
 				leftFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition 
 				rightFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
 
-			print("direct {} left {} right {}".format(e, leftFace, rightFace))
-
 			for face, direction, offset in ((leftFace, "last", self.CELL_PIXEL_WIDTH//3), (rightFace, "first", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
+				isVoid = edgeName not in data or data[edgeName] == 0
 
-				if edgeName in data and data[edgeName] > 0:
-					lineColour = "#00{:02x}00".format(int(255 * (1 - data[edgeName])))
+				if not isVoid:
+					if data[edgeName] != 1:
+						lineColour = "green"
+					else:
+						lineColour = "black"
 				else:
-					lineColour = "#ccc"
+					lineColour = self.VOID_COLOUR
 				
 				self.create_line(self.TOP_LEFT_CORNER[0] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
 						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
@@ -127,6 +150,11 @@ class GridGraph(Canvas):
 						arrow = direction,
 						fill = lineColour,
 						width=3)
+
+				if not isVoid and data[edgeName] != 1:
+					self.create_text(self.TOP_LEFT_CORNER[0] + (self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
+ text=str(data[edgeName]), fill='blue')
 
 
 def displayGrid(width, vinf, data):
