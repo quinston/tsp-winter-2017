@@ -33,9 +33,20 @@ for a in range((k-1)+1, (k-1)*(k-1), k-1)
 )
 
 if __name__ == '__main__':
-	V, E, Vstar, Estar = gridGraph(int(sys.argv[1]))
+	gridWidth = int(sys.argv[1])
+	V, E, Vstar, Estar = gridGraph(gridWidth)
 	vinf = int(sys.argv[2])
 	weights = dict(itertools.product(E, (1,)))
 
+	def outputGridDisplayerFormat(filename, pt):
+		with open(filename, 'w') as f:
+			print(gridWidth, file=f)
+			print(vinf, file=f)
+			print(pt, file=f)
+
 	import findTspCps
-	findTspCps.findCps(V, E, Vstar, Estar, vinf, weights)
+	i = 0
+	for (cp, _, x) in findTspCps.findCps(V, E, Vstar, Estar, vinf, weights):
+		outputGridDisplayerFormat("grid.cp{}".format(i), cp)
+		outputGridDisplayerFormat("grid.point{}".format(i), x)
+

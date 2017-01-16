@@ -1,4 +1,6 @@
 
+# yields pairs (cp, distance, x) where cp*x <= distance is a cutting plane that cuts off x
+# cp, x are sparse labelled vectors (i.e. list of 2-ples of label and value)
 
 def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 	import sys
@@ -12,6 +14,8 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 	# Create a list of pairs omitting zero entries 
 	def sparselyLabel(v):
 		return [(a,b) for a,b in zip(variableNames, v) if b != 0]
+
+			
 
 	objectiveFunction = None
 	if weights == None:
@@ -121,6 +125,9 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			#print("Linear combination is: \n{}".format("+".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
 			# print("Point {} violates it by {}".format(sparselyLabel(pointToSeparate), cpViolation))
 
+			yield (cpLabelledVector, cpDistance, sparselyLabel(pointToSeparate))
+
+
 			A += [cpVector]
 			b += [cpDistance]
 
@@ -143,6 +150,8 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			pointToSeparate = polytopeProb.solution.get_values()
 			print("New point to separate: ", sparselyLabel(pointToSeparate))
 			print("Objective value: ", polytopeProb.solution.get_objective_value())
+
+
 
 	except CplexError as e:
 		print(e, file=sys.stderr)
