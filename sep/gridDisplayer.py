@@ -93,7 +93,7 @@ class GridGraph(Canvas):
 				upFace = (verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
 				downFace = (verticalPosition - 0) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
 
-			for face, direction, offset in ((upFace, "last", self.CELL_PIXEL_WIDTH//3), (downFace, "first", 2 * self.CELL_PIXEL_WIDTH // 3)):
+			for face, direction, offset in ((upFace, "first", self.CELL_PIXEL_WIDTH//3), (downFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
 				isVoid = edgeName not in data or data[edgeName] == 0
 
@@ -135,7 +135,7 @@ class GridGraph(Canvas):
 				leftFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition 
 				rightFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
 
-			for face, direction, offset in ((leftFace, "last", self.CELL_PIXEL_WIDTH//3), (rightFace, "first", 2 * self.CELL_PIXEL_WIDTH // 3)):
+			for face, direction, offset in ((leftFace, "first", self.CELL_PIXEL_WIDTH//3), (rightFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
 				isVoid = edgeName not in data or data[edgeName] == 0
 
