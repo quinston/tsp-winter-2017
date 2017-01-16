@@ -68,8 +68,6 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 
 			# Here we modify the default CGSEP programme for our educational purposes
 
-			# don't care about sparse combinations
-			cpProb.objective.set_linear([("u{}".format(i), 0) for i in range(1, len(A)+1)])
 
 			# force x_e = u^T A_j = 0 for cutting plane 
 			cpProb.linear_constraints.add(
