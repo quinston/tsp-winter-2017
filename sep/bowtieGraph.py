@@ -11,5 +11,6 @@ vinf = 3
 
 import findTspCps
 vinf = 6
-findTspCps.findCps(V, E, Vstar, Estar, vinf, weights)
+for _ in findTspCps.findCps(V, E, Vstar, Estar, vinf, weights):
+	pass
 
