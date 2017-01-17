@@ -63,6 +63,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			return [(prob.solution.get_values('a{}'.format(i)) if i in getPositiveSupport(pointToSeparate) else math.floor(sum(u[j] * row[i-1] for j,row in enumerate(A)))) for i in range(1, len(variableNames) + 1)]
 
 
+		originalNoEquations = len(A)
 		noCuttingPlanes = 0
 		cpViolation = 1e20
 		d = 0.01
@@ -87,6 +88,13 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 					rhs=[0] * (len(variableNames) - len(edges)), 
 					senses='L' * (len(variableNames) - len(edges)))
 
+			# only accept rank 1 chvatal cuts
+			cuttingPlaneIndices = range(originalNoEquations + 1, originalNoEquations + noCuttingPlanes + 1)
+			cpProb.linear_constraints.add(
+					lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in cuttingPlaneIndices],
+						val=[1 for i in cuttingPlaneIndices])],
+						rhs=[0],
+						senses='E')
 
 			"""
 			# disincentivize original variables x_e, incentivize new variables z_e,v
@@ -104,7 +112,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			"""
                                 
 
-			cpProb.write('cg.lp')
+			cpProb.write('cg.cut{}.lp'.format(noCuttingPlanes))
 	
 			cpProb.set_results_stream(None)
 			print("Finding a cutting plane...")
@@ -114,6 +122,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			cpLabelledVector = sparselyLabel(cpVector)
 			if len(cpLabelledVector) == 0:
 				print("Done")
+				yield ([], 0, sparselyLabel(pointToSeparate))
 				break
 			cpDistance = cpProb.solution.get_values()[0]
 
@@ -122,7 +131,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			print("Found cutting plane: ", cpLabelledVector)
 			# print a0
 			print("Found cutting plane: <=", cpDistance)
-			#print("Linear combination is: \n{}".format("+".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
+			print("Linear combination is: \n{}".format("+\n".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
 			# print("Point {} violates it by {}".format(sparselyLabel(pointToSeparate), cpViolation))
 
 			yield (cpLabelledVector, cpDistance, sparselyLabel(pointToSeparate))

@@ -31,7 +31,7 @@ def makeCgLp(x, A, b, d):
 	prob = cplex.Cplex()
 	try:
 		# Set maximum branch nodes 
-		prob.parameters.mip.limits.nodes.set(10000)
+		prob.parameters.mip.limits.nodes.set(100000)
 		prob.objective.set_sense(prob.objective.sense.maximize)
 		prob.variables.add(names = variables + slackVariables + coefficientVariables, 
 			obj = 
