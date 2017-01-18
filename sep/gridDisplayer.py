@@ -3,10 +3,11 @@ from tkinter import *
 
 class GridGraph(Canvas):
 	def __init__(self, master, width, vinf, data):
-		super().__init__(master, width=1000, height=1000)
+		super().__init__(master)
 
 		self.GRID_WIDTH = width
-		self.CELL_PIXEL_WIDTH = 130
+		self.CELL_PIXEL_WIDTH = 100
+
 		self.ARROW_PIXEL_LENGTH = self.CELL_PIXEL_WIDTH // 2
 		self.TOP_LEFT_CORNER = (30, 30)
 		self.VOID_COLOUR = "#f0f0f0"
@@ -167,6 +168,9 @@ def displayGrid(width, vinf, data):
 	root.rowconfigure(0, weight=1)
 	g1 = GridGraph(root, width=width, vinf=vinf, data=data)
 	g1.grid(row=0, column=0, sticky=(N,E,W,S))
+
+	windowWidth = windowHeight = g1.CELL_PIXEL_WIDTH * (width + 1)
+	root.geometry('{}x{}'.format(windowWidth, windowHeight))
 	root.mainloop()
 
 
