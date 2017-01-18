@@ -73,7 +73,6 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 
 			# Here we modify the default CGSEP programme for our educational purposes
 
-
 			# force x_e = u^T A_j = 0 for cutting plane 
 			cpProb.linear_constraints.add(
 					lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
@@ -110,7 +109,11 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 						rhs = -d,
 						sense="L")
 			"""
-                                
+
+			# don't care about sparse combinations
+			cpProb.objective.set_linear([("u{}".format(i), 0) for i in range(1, len(A)+1)])
+			# allow arbitrary coefficients
+			cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
 
 			cpProb.write('cg.cut{}.lp'.format(noCuttingPlanes))
 	
@@ -132,7 +135,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			# print a0
 			print("Found cutting plane: <=", cpDistance)
 			print("Linear combination is: \n{}".format("+\n".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
-			# print("Point {} violates it by {}".format(sparselyLabel(pointToSeparate), cpViolation))
+			print("Violation: {}".format(cpViolation))
 
 			yield (cpLabelledVector, cpDistance, sparselyLabel(pointToSeparate))
 
