@@ -55,7 +55,7 @@ def rectangularGridGraph(k, l):
 # k-2 rows in between
 *[
 [(b-(l-1), b) for b in range(a, a + (l-1-1) + 1)] + [(a, lastFace)] + [(b, b+1) for b in range(a, a + (l-2-1) + 1)] + [(a + (l-2), lastFace)]
-for a in range((l-1)+1, (k-1)*(l-1), l-1)
+for a in range((l-1) + 1, (k-1)*(l-1) + 1, l-1)
 ],
 # bottom to infinite face
 [(a, lastFace) for a in range((k-2) * (l-1) + 1, (k-1)*(l-1) + 1)]
@@ -63,15 +63,17 @@ for a in range((l-1)+1, (k-1)*(l-1), l-1)
 )
 
 if __name__ == '__main__':
-	gridWidth = int(sys.argv[1])
-	V, E, Vstar, Estar = gridGraph(gridWidth)
-	vinf = int(sys.argv[2])
+	gridHeight = int(sys.argv[1])
+	gridWidth = int(sys.argv[2])
+	V, E, Vstar, Estar = rectangularGridGraph(gridHeight, gridWidth) 
+	vinf = int(sys.argv[3])
 	weights = dict(itertools.product(E, (1,)))
-	weights[(3,4)] = weights[(3,8)] = weights[(8,9)] = weights[(4,9)] = 10
+	print(Estar)
 
 	def outputGridDisplayerFormat(filename, pt):
 		with open(filename, 'w') as f:
 			print(gridWidth, file=f)
+			print(gridHeight, file=f)
 			print(vinf, file=f)
 			print(pt, file=f)
 
