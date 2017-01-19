@@ -68,12 +68,11 @@ if __name__ == '__main__':
 	V, E, Vstar, Estar = rectangularGridGraph(gridHeight, gridWidth) 
 	vinf = int(sys.argv[3])
 	weights = dict(itertools.product(E, (1,)))
-	print(Estar)
 
 	def outputGridDisplayerFormat(filename, pt):
 		with open(filename, 'w') as f:
-			print(gridWidth, file=f)
 			print(gridHeight, file=f)
+			print(gridWidth, file=f)
 			print(vinf, file=f)
 			print(pt, file=f)
 

@@ -2,9 +2,10 @@ from tkinter import *
 
 
 class GridGraph(Canvas):
-	def __init__(self, master, width, vinf, data):
+	def __init__(self, master, height, width, vinf, data):
 		super().__init__(master)
 
+		self.GRID_HEIGHT = height
 		self.GRID_WIDTH = width
 		self.CELL_PIXEL_WIDTH = 100
 
@@ -12,7 +13,7 @@ class GridGraph(Canvas):
 		self.TOP_LEFT_CORNER = (30, 30)
 		self.VOID_COLOUR = "#f0f0f0"
 
-		for i in range(1, (2*width - 1) * (width - 1) + (width-1) + 1):
+		for i in range(1, (2*width - 1) * (height - 1) + (width-1) + 1):
 			self.drawEdge(i, data)
 			self.drawArcs(i, data)
 
@@ -162,21 +163,23 @@ class GridGraph(Canvas):
  text="{:.3f}".format(data[edgeName]), fill='blue')
 
 
-def displayGrid(width, vinf, data):
+def displayGrid(height, width, vinf, data):
 	root = Tk()
 	root.columnconfigure(0, weight=1)
 	root.rowconfigure(0, weight=1)
-	g1 = GridGraph(root, width=width, vinf=vinf, data=data)
+	g1 = GridGraph(root, height=height, width=width, vinf=vinf, data=data)
 	g1.grid(row=0, column=0, sticky=(N,E,W,S))
 
-	windowWidth = windowHeight = g1.CELL_PIXEL_WIDTH * (width + 1)
+	windowWidth = g1.CELL_PIXEL_WIDTH * (width + 1)
+	windowHeight = g1.CELL_PIXEL_WIDTH * (height + 1)
 	root.geometry('{}x{}'.format(windowWidth, windowHeight))
 	root.mainloop()
 
 
 if __name__ == '__main__':
 	while True:
+		height = int(input('Grid height: '))
 		width = int(input('Grid width: '))
 		vinf = int(input('vinf: '))
 		data = dict(eval(input('data: ')))
-		displayGrid(width, vinf, data)
+		displayGrid(height, width, vinf, data)
