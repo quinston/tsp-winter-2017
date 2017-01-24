@@ -60,7 +60,7 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 		# This function takes care of filling in a_{XX} <- u^T A_{XX} where we had previously omitted a_{XX} variables  from the CG-cut system due to no positive support in pointToSeparate
 		def cpVectorFromProb(prob, pointToSeparate, A):
 			u = [prob.solution.get_values('u{}'.format(i)) for i in range(1, len(A)+1)]
-			return [(prob.solution.get_values('a{}'.format(i)) if i in getPositiveSupport(pointToSeparate) else math.floor(sum(u[j] * row[i-1] for j,row in enumerate(A)))) for i in range(1, len(variableNames) + 1)]
+			return [(prob.solution.get_values('a{}'.format(i)) if i in getPositiveSupport(pointToSeparate) else 0 if i <= len(edges) else math.floor(sum(u[j] * row[i-1] for j,row in enumerate(A)))) for i in range(1, len(variableNames) + 1)]
 
 
 		originalNoEquations = len(A)
@@ -95,23 +95,9 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 						rhs=[0],
 						senses='E')
 
-			"""
-			# disincentivize original variables x_e, incentivize new variables z_e,v
-			# when a_k is negative, it gets floored to a nonzero negative number, which
-			# becomes positive when we flip the inequality
-			# when a_k is positive, it gets floored to 0
-			cpProb.variables.add(names=["v{}".format(i) for i in positiveSupport], 
-					obj=[(-1e-3 if i <= len(edges) else +1e-5) for i in positiveSupport],
-					types=[cpProb.variables.type.binary] * len(positiveSupport))
-			for i in positiveSupport:
-				cpProb.indicator_constraints.add(indvar="v{}".format(i),
-						lin_expr=cplex.SparsePair(ind=["a{}".format(i)], val=[1]),
-						rhs = -d,
-						sense="L")
-			"""
-
 			# don't care about sparse combinations
 			cpProb.objective.set_linear([("u{}".format(i), 0) for i in range(1, len(A)+1)])
+
 			# allow arbitrary coefficients
 			cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
 

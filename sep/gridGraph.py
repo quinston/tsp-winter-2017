@@ -69,6 +69,8 @@ if __name__ == '__main__':
 	vinf = int(sys.argv[3])
 	weights = dict(itertools.product(E, (1,)))
 
+	weights[(1,2)] = weights[(1, gridWidth + 1)] = weights[(2, gridWidth + 2)] = weights[(gridWidth + 1, gridWidth + 2)] = 10
+
 	def outputGridDisplayerFormat(filename, pt):
 		with open(filename, 'w') as f:
 			print(gridHeight, file=f)
