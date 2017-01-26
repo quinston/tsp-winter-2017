@@ -16,8 +16,6 @@ def mod2rref(Ab):
 	noRows, noColumns = Ab.shape
 	currentPivotRow = 0
 	for numColumn in range(noColumns):
-		print("Column {}".format(numColumn))
-		print(Ab)
 		for numRow in range(currentPivotRow, noRows):
 			if Ab[numRow, numColumn] == 1:
 				pivot = numRow
