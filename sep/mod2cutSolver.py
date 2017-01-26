@@ -15,15 +15,16 @@ def mod2rref(Ab):
 	# Gauss Jordan elimination
 	noRows, noColumns = Ab.shape
 	currentPivotRow = 0
-	for numColumn in range(noColumns):
-		for numRow in range(currentPivotRow, noRows):
+	# Don't go all the way to the end, that's b
+	for numColumn in xrange(noColumns - 1):
+		for numRow in xrange(currentPivotRow, noRows):
 			if Ab[numRow, numColumn] == 1:
 				pivot = numRow
 				pivotRow = Ab.getrow(pivot)
 
 				# Add this row to all other rows with 1 in this position
 				# Recall + mod 2 is xor
-				rowIndicesToAddPivotRowTo = [i for i in range(noRows) if i != pivot and Ab[i, numColumn] == 1]
+				rowIndicesToAddPivotRowTo = [i for i in xrange(noRows) if i != pivot and Ab[i, numColumn] == 1]
 
 				def symmetricDifference(row1, row2):
 					return set(row1.iteritems()) ^ set(row2.iteritems())
@@ -32,7 +33,7 @@ def mod2rref(Ab):
 				for index in rowIndicesToAddPivotRowTo:
 					newRow = symmetricDifference(Ab[index, :], pivotRow)
 					# Clear teh row
-					Ab[index, :] = scipy.sparse.dok_matrix((1, noColumns))
+					Ab[index, :] = 0
 
 					# Fill the row
 					for k,v in newRow:
@@ -47,6 +48,72 @@ def mod2rref(Ab):
 
 	return Ab
 
+"""
+Returns [a, [b1, b2, ...]]
+
+where a is the affine offset and b1, b2, ... are the bases of the solution space
+
+
+Returns [] if infeasible
+"""
+def mod2cpBasis(Ab):
+	noRows, noColumns = Ab.shape
+	noVariables = noColumns - 1
+	mod2rref(Ab)
+
+	# Check for infeasibility (0s in A, 1 in b)
+	isInfeasible = False
+	for numRow in xrange(noRows):
+		if Ab[numRow, :noVariables].nnz == 0 and Ab[numRow, noVariables] == 1:
+			isInfeasible = True
+			break
+
+	if isInfeasible:
+		return []
+
+	"""
+	Read off the solution like this:
+	( .... 1 ... 1 0 1 0 ... | 1 )
+
+	The affine offset is the RHS padded with (noColumns - noRows) many 0s
+
+	Each column with a row-leading one is a pivot variable and has affine offset from RHS
+	Each column without a row-leading one is a free variable and has affine offset 0: read down the column to see dependence with the pivot variables; put 1 in place corresponding to free variable
+	"""
+
+
+	pivotVariables = set()
+	currentPivotRow = 0
+	# Don't go all the way to b
+	for i in xrange(noVariables):
+		if Ab[currentPivotRow, i] == 1:
+			pivotVariables.add(i)
+			currentPivotRow += 1
+			if currentPivotRow == noRows:
+				break
+
+	# Trim the zero rows
+	Ab.resize((currentPivotRow, noColumns))
+
+	rhs = Ab[:, noVariables]
+
+	pivotVariablesToRowNumbers = dict((b,a) for a,b in enumerate(sorted(list(pivotVariables))))
+	affineOffset = scipy.sparse.dok_matrix((noVariables, 1), 0, dtype='b')
+	for i in xrange(noVariables):
+		if i in pivotVariables:
+			affineOffset[i, 0] = rhs[pivotVariablesToRowNumbers[i], 0]
+
+	basis = []
+	noFreeVariables = noVariables - len(pivotVariables)
+	for i in xrange(noVariables):
+		if i not in pivotVariables:
+			base = scipy.sparse.dok_matrix((noVariables, 1), 0, dtype='b')
+			base[i, 0] = 1
+			for numColumn, numRow in pivotVariablesToRowNumbers.iteritems():
+				base[numColumn, 0] = Ab[numRow, i]
+			basis.append(base)
+	
+	return [affineOffset, basis]
 
 
 def mod2cutsLoop(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
