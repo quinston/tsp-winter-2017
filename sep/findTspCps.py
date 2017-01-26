@@ -60,7 +60,10 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 		# This function takes care of filling in a_{XX} <- u^T A_{XX} where we had previously omitted a_{XX} variables  from the CG-cut system due to no positive support in pointToSeparate
 		def cpVectorFromProb(prob, pointToSeparate, A):
 			u = [prob.solution.get_values('u{}'.format(i)) for i in range(1, len(A)+1)]
-			return [(prob.solution.get_values('a{}'.format(i)) if i in getPositiveSupport(pointToSeparate) else 0 if i <= len(edges) else math.floor(sum(u[j] * row[i-1] for j,row in enumerate(A)))) for i in range(1, len(variableNames) + 1)]
+			uA = [(prob.solution.get_values('a{}'.format(i)) if i in getPositiveSupport(pointToSeparate) else sum(u[j] * row[i-1] for j,row in enumerate(A))) for i in range(1, len(variableNames) + 1)]
+			floorUA = [math.floor(x) for x in uA]
+			print("Variables that need flooring, and amount to floor: {}".format(sparselyLabel([a - b for a,b in zip(uA, floorUA)])))
+			return floorUA
 
 
 		originalNoEquations = len(A)
