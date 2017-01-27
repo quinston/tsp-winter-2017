@@ -13,41 +13,27 @@ except NameError:
 Ab: (A|b) the constraints and rhs put together in a dok_matrix. Modifies this in-place
 """
 def mod2rref(Ab):
-	# Reduce whole matrix mod 2
-	for key in list(Ab.keys()):
-		Ab[key] = Ab[key] % 2
+	Ab = Ab.todense() % 2
+
+	import numpy
 
 	# Gauss Jordan elimination
 	noRows, noColumns = Ab.shape
 	currentPivotRow = 0
 	# Don't go all the way to the end, that's b
 	for numColumn in xrange(noColumns - 1):
+		#print("On column {}".format(numColumn))
 		for numRow in xrange(currentPivotRow, noRows):
 			if Ab[numRow, numColumn] == 1:
 				pivot = numRow
-				pivotRow = Ab.getrow(pivot)
+				pivotRow = Ab[pivot, :].copy()
+
 
 				# Add this row to all other rows with 1 in this position
-				# Recall + mod 2 is xor
 				rowIndicesToAddPivotRowTo = [i for i in xrange(noRows) if i != pivot and Ab[i, numColumn] == 1]
 
-				def symmetricDifference(row1, row2):
-					try:
-						return set(row1.keys()) ^ set(row2.keys())
-					except AttributeError as e:
-						print(dir(row1))
-						print(dir(row2))
-						raise e
-
-
 				for index in rowIndicesToAddPivotRowTo:
-					newRow = symmetricDifference(Ab[index, :], pivotRow)
-					# Clear teh row
-					Ab[index, :] = 0
-
-					# Fill the row
-					for k in newRow:
-						Ab[index, k[1]] = 1
+					Ab[index, :] = (Ab[index, :] + pivotRow) % 2
 
 				# Bring pivot row to top
 				Ab[numRow, :] = Ab[currentPivotRow, :]
@@ -56,7 +42,7 @@ def mod2rref(Ab):
 				currentPivotRow += 1
 				break
 
-	return Ab
+	return scipy.sparse.dok_matrix(Ab)
 
 """
 Returns [a, [b1, b2, ...]]
@@ -69,7 +55,7 @@ Returns [] if infeasible
 def mod2cpBasis(Ab):
 	noRows, noColumns = Ab.shape
 	noVariables = noColumns - 1
-	mod2rref(Ab)
+	Ab = mod2rref(Ab)
 
 	# Check for infeasibility (0s in A, 1 in b)
 	isInfeasible = False
@@ -128,6 +114,7 @@ def mod2cpBasis(Ab):
 
 def mod2cutsLoop(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 	Ab = inequalities.makeSparseExtendedLpMatrix(vertices, edges, dualVertices, dualEdges, vinf, includeBounds=True)
+
 	A = Ab[:, :(Ab.shape[1] - 1)]
 	b = Ab[:, (Ab.shape[1] - 1)]
 
@@ -229,8 +216,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 				# round down RHS
 				distance = cutAndDistance[noVariables, 0] - 1
 				
-				listOfLhs.append(matrixRowToSparsePair(cut))
-				rhs.append(distance)
+				polytopeProb.linear_constraints.add(lin_expr=[matrixRowToSparsePair(cut)], rhs=[distance], senses='L')
 
 				# Add cut for each basis vector
 				for basisVector in basis[1]:
@@ -241,7 +227,8 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 					listOfLhs.append(matrixRowToSparsePair(cut))
 					rhs.append(distance)
 
-			polytopeProb.linear_constraints.add(lin_expr=listOfLhs, rhs=rhs, senses='L' * len(rhs))
+					polytopeProb.linear_constraints.add(lin_expr=[matrixRowToSparsePair(cut)], rhs=[distance], senses='L')
+
 			polytopeProb.solve()
 
 			if not polytopeProb.solution.is_primal_feasible():
