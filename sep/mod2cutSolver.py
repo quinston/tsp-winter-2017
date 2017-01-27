@@ -148,9 +148,6 @@ val = [int(row[i]) for i in sorted(row.keys())])
 		return cplex.SparsePair(ind = [name for i,name in enumerate(variableNames) if row[0, i] != 0],
 val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 
-	Alol = [dokRowToSparsePair(A[i, :]) for i in xrange(A.shape[0])]
-	bList = [int(b[i, 0]) for i in range(b.shape[0])]
-
 	if weights == None:
 		objectiveFunction = [1] * len(edges) + [0] * (len(variableNames) - len(edges))
 	else:
@@ -163,7 +160,10 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 			obj = objectiveFunction,
 			lb = [0] * len(variableNames))
 
-		polytopeProb.linear_constraints.add(lin_expr = Alol, rhs = bList, senses = 'L' * len(bList))
+		for numRow in range(Ab.shape[0]):
+			if numRow % 100 ==0:
+				print("Added constraint {}".format(numRow))
+			polytopeProb.linear_constraints.add(lin_expr = [dokRowToSparsePair(A[numRow, :])], rhs = [b[numRow, 0]], senses = 'L')
 		
 
 		polytopeProb.solve()
@@ -246,9 +246,12 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 
 			if not polytopeProb.solution.is_primal_feasible():
 				print('Subtour polytope is empty')
+				break
 
 			pointToSeparate = polytopeProb.solution.get_values()
 			print('New point is {}'.format(sparselyLabel(pointToSeparate)))
+
+		print('No more mod 2 cuts')
 
 
 			

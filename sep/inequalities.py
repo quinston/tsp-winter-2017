@@ -145,7 +145,7 @@ def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vin
 	return ret
 
 def makeSparseExtendedLpMatrix(vertices, edges, dualVertices, dualEdges, vinf, includeBounds=False):
-	import scipy
+	import scipy.sparse
 
 	noOriginalVariables = len(edges)
 	variableNames = enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf)
