@@ -99,7 +99,7 @@ Gives rows of Ax <= b that comprise the description of the extended formulation 
 
 Returns: iterable of (a: iterable of real, b: real)
 """
-def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vinf):
+def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vinf, includeBounds=False):
 	import itertools
 	extraVariables = getExtraVariables(edges, dualEdges, vinf)
 	noOriginalVariables = len(edges)
@@ -136,6 +136,69 @@ def makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vin
 		ret.append((row, 2))
 		ret.append(([-x for x in row], -2))
 
+	if includeBounds:
+			for i in range(noVariables):
+				row = [0] * noVariables
+				row[i] = -1
+				ret.append((row, 0))
 
 	return ret
 
+def makeSparseExtendedLpMatrix(vertices, edges, dualVertices, dualEdges, vinf, includeBounds=False):
+	import scipy
+
+	noOriginalVariables = len(edges)
+	variableNames = enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf)
+	enumerationOfVariables = dict((b,a) for a,b in enumerate(variableNames))
+	noVariables = len(variableNames)
+	extraVariables = getExtraVariables(edges, dualEdges, vinf)
+
+	# E - delta(vinf)
+	noMixedEqualities = sum(1 for e in edges if vinf not in e)
+	# V* - faces with vinf in boundary cycle
+	noPureExtraEqualities = sum(1 for f in dualVertices if vinf not in f)
+	noDegreeConstraints = len(vertices)
+	noBoundsConstraints = noVariables
+
+	noConstraints = (noMixedEqualities  + noPureExtraEqualities + noDegreeConstraints) * 2
+	if includeBounds:
+		noConstraints += noBoundsConstraints
+
+	ret = scipy.sparse.dok_matrix((noConstraints, noVariables + 1))
+
+	nextConstraintRow = 0
+
+	# Mixed equalities
+	for edgeIndex, edgeExtraVariables in extraVariables.items():
+		ret[nextConstraintRow, edgeIndex - 1] = ret[nextConstraintRow, enumerationOfVariables[edgeExtraVariables[0]]] = ret[nextConstraintRow, enumerationOfVariables[edgeExtraVariables[1]]] = 1
+		ret[nextConstraintRow, noVariables] = 1
+		ret[nextConstraintRow + 1, :] = -ret[nextConstraintRow, :]
+		nextConstraintRow += 2
+	
+	# Pure extra equalities
+	for fIndex, f in enumerate(dualVertices, 1):
+		if vinf not in f:
+			ret[nextConstraintRow, noVariables] = 1
+			for eIndex, e in enumerate(dualEdges, 1):
+				if fIndex in e:
+					extraVariableIndex = enumerationOfVariables["z{},{}".format(eIndex, fIndex)]
+					ret[nextConstraintRow, extraVariableIndex] = 1
+			ret[nextConstraintRow + 1, :] = -ret[nextConstraintRow, :]
+			nextConstraintRow += 2
+
+	# Degree equalities
+	for constraint in degreeConstraints(vertices, edges, True):
+		ret[nextConstraintRow, noVariables] = 2
+		for eIndex in constraint[1]:
+			ret[nextConstraintRow, eIndex - 1] = 1
+		ret[nextConstraintRow + 1, :] = -ret[nextConstraintRow, :]
+		nextConstraintRow += 2
+
+	if includeBounds:
+			for i in range(noVariables):
+				ret[nextConstraintRow, i] = -1
+				nextConstraintRow += 1
+
+	assert(nextConstraintRow == noConstraints)
+
+	return ret
