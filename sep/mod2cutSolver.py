@@ -3,6 +3,7 @@ import scipy.sparse
 import cplex
 from cplex.exceptions import CplexError
 import inequalities
+import numpy
 
 try:
 	xrange
@@ -15,7 +16,6 @@ Ab: (A|b) the constraints and rhs put together in a dok_matrix. Modifies this in
 def mod2rref(Ab):
 	Ab = Ab.todense() % 2
 
-	import numpy
 
 	# Gauss Jordan elimination
 	noRows, noColumns = Ab.shape
@@ -42,7 +42,8 @@ def mod2rref(Ab):
 				currentPivotRow += 1
 				break
 
-	return scipy.sparse.dok_matrix(Ab)
+	return Ab
+	# return scipy.sparse.dok_matrix(Ab)
 
 """
 Returns [a, [b1, b2, ...]]
@@ -60,7 +61,7 @@ def mod2cpBasis(Ab):
 	# Check for infeasibility (0s in A, 1 in b)
 	isInfeasible = False
 	for numRow in xrange(noRows):
-		if Ab[numRow, :noVariables].nnz == 0 and Ab[numRow, noVariables] == 1:
+		if (not Ab[numRow, :noVariables].any()) and Ab[numRow, noVariables] == 1:
 			isInfeasible = True
 			break
 
@@ -89,7 +90,7 @@ def mod2cpBasis(Ab):
 				break
 
 	# Trim the zero rows
-	Ab.resize((currentPivotRow, noColumns))
+	Ab = numpy.resize(Ab, (currentPivotRow, noColumns))
 
 	rhs = Ab[:, noVariables]
 
@@ -97,7 +98,7 @@ def mod2cpBasis(Ab):
 	affineOffset = scipy.sparse.dok_matrix((noVariables, 1), 0, dtype='b')
 	for i in xrange(noVariables):
 		if i in pivotVariables:
-			affineOffset[i, 0] = rhs[pivotVariablesToRowNumbers[i], 0]
+			affineOffset[i, 0] = rhs[pivotVariablesToRowNumbers[i]]
 
 	basis = []
 	noFreeVariables = noVariables - len(pivotVariables)
