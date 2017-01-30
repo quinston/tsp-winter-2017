@@ -1,0 +1,39 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{commath}
+
+\newtheorem{theorem}{Theorem}
+
+\begin{document}
+\begin{theorem}
+Let $G=(V,E)$ be connected nonbipartite planar. Then the extended formulation of SEP(G) has dimension $\abs{E}+\abs{V}-2$.
+\end{theorem}
+\begin{proof}
+\begin{enumerate}
+\item Since $G$ is nonbipartite, the equations defining SEP(G) are linearly independent.
+\item There exist one $x$ variable for each $e\in E$, and two $z$ variables for each $e\not\in \delta(v_\infty)$.
+\item So the ambient space has dimension $\abs{E}+2(\abs{E-\delta(v_\infty)})$.
+\item This is equal to $\abs{E}+2\abs{E(G-v_\infty)}$.
+\item There exists an equation $x_e+z_{e,v}+z_{e,u}=1$ for each $e\in E-\delta(v_\infty)$, $e^* = \cbr{u,v}$.
+\item Hence these equations decrease the dimension of SEP(G) by a total of $\abs{E-\delta(v_\infty)} = \abs{E(G-v_\infty)}$.
+\item There exists an equation $\sum_{e\in\delta(v)} z_{e,v}=1$ for each $v\in V^*$ with $v_\infty$ not incident to $v$.
+\item There exist $\abs{F(G-v_\infty)} - 1$ such faces, as there exists exactly one face of $F(G-v_\infty)$ that contains $v_\infty$ in its interior, and as all other faces of $G-v_\infty$ are faces of $G$.
+\item Hence these equations decrease the dimension of SEP(G) by a total of $\abs{F(G-v_\infty)} - 1$.
+\item There exists an equation $x(\delta(v)) = 2$ for each $v\in V$.
+\item These decrease the dimension of SEP(G) by a total of $\abs{V}$.
+\item Altogether: 
+\begin{align*}
+&\phantom{{}={}}  \abs{E}+2\abs{E(G-v_\infty)} - \del{\abs{E(G-v_\infty} + \abs{F(G-v_\infty)} - 1 + \abs{V}} \\
+&= \abs{E} + \abs{E(G-v_\infty)} - \abs{F(G-v_\infty)} + 1 - \abs{V} \\
+&= \abs{E} + \abs{V(G-v_\infty)} - \kappa(G-v_\infty) - \abs{V}  & \parbox{5cm}{by Euler's formula, $E-F+1=V-\kappa$} \\
+&= \abs{E} - \kappa(G-v_\infty) - 1 & \text{since $\abs{V(G-v_\infty)} = \abs{V}-1$}
+\end{align*}
+
+\end{enumerate}
+\end{proof}
+
+Notably, this is independent of choice of $v_\infty$.
+
+\end{document}
