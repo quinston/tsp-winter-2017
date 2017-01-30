@@ -196,14 +196,16 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 			# Throw away remaining unused columns
 			systemAb.resize((systemAb.shape[0], numColumnInSystemAb))
 
+			# Convert to coo
+			systemAb = systemAb.tocoo()
+
 			# Add rhs: 0s everywhere except a 1 for b
 			systemToSolve = scipy.sparse.hstack([
 				systemAb, 
 				scipy.sparse.coo_matrix(([1], ([systemAb.shape[0] - 1], [0])), shape=(systemAb.shape[0], 1))
-			], format='dok')
+			], format='coo')
 
 			basis = mod2cpBasis(systemToSolve)
-			#print("Basis is ", basis)
 
 			# No more mod-2 cuts
 			if basis == []:
