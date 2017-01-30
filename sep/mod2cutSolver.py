@@ -4,6 +4,14 @@ import cplex
 from cplex.exceptions import CplexError
 import inequalities
 import numpy
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger.addHandler(ch)
+
 
 try:
 	xrange
@@ -150,17 +158,17 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 
 		for numRow in range(Ab.shape[0]):
 			if numRow % 100 ==0:
-				print("Added constraint {}".format(numRow))
+				logging.info("Added constraint {}".format(numRow))
 			polytopeProb.linear_constraints.add(lin_expr = [dokRowToSparsePair(A[numRow, :])], rhs = [b[numRow, 0]], senses = 'L')
 		
 
 		polytopeProb.solve()
 		if not polytopeProb.solution.is_primal_feasible():
-			print('Original subtour polytope is empty')
+			logging.info('Original subtour polytope is empty')
 			return
 
 		pointToSeparate = polytopeProb.solution.get_values()
-		print('Initial point: {}'.format(sparselyLabel(pointToSeparate)))
+		logging.info('Initial point: {}'.format(sparselyLabel(pointToSeparate)))
 
 		""" 
 		The equations that x* satisfies tightly are all the equations, and
@@ -214,7 +222,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 				listOfLhs = []
 				rhs = []
 
-				print("Making cuts")
+				logging.info("Making cuts")
 
 				# Add cut from affine offset
 				cutAndDistance = systemAb.dot(basis[0])
@@ -222,7 +230,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 				# round down RHS
 				distance = cutAndDistance[noVariables, 0] - 1
 
-				print("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
+				logging.info("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
 				
 				polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L')
 
@@ -232,7 +240,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 					cut = cutAndDistance[:noVariables, 0].transpose()
 					distance = cutAndDistance[noVariables, 0] - 1
 
-					print("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
+					logging.info("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
 
 
 					polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L')
@@ -240,13 +248,13 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 			polytopeProb.solve()
 
 			if not polytopeProb.solution.is_primal_feasible():
-				print('Subtour polytope is empty')
+				logging.info('Subtour polytope is empty')
 				break
 
 			pointToSeparate = polytopeProb.solution.get_values()
-			print('New point is {}'.format(sparselyLabel(pointToSeparate)))
+			logging.info('New point is {}'.format(sparselyLabel(pointToSeparate)))
 
-		print('No more mod 2 cuts')
+		logging.info('No more mod 2 cuts')
 
 
 			
