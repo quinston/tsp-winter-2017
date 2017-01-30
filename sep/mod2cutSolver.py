@@ -95,7 +95,7 @@ def mod2cpBasis(Ab):
 	rhs = Ab[:, noVariables]
 
 	pivotVariablesToRowNumbers = dict((b,a) for a,b in enumerate(sorted(list(pivotVariables))))
-	affineOffset = scipy.sparse.dok_matrix((noVariables, 1), 0, dtype='b')
+	affineOffset = numpy.zeros((noVariables, 1), dtype='b')
 	for i in xrange(noVariables):
 		if i in pivotVariables:
 			affineOffset[i, 0] = rhs[pivotVariablesToRowNumbers[i]]
@@ -104,7 +104,7 @@ def mod2cpBasis(Ab):
 	noFreeVariables = noVariables - len(pivotVariables)
 	for i in xrange(noVariables):
 		if i not in pivotVariables:
-			base = scipy.sparse.dok_matrix((noVariables, 1), 0, dtype='b')
+			base = numpy.zeros((noVariables, 1), dtype='b')
 			base[i, 0] = 1
 			for numColumn, numRow in pivotVariablesToRowNumbers.items():
 				base[numColumn, 0] = Ab[numRow, i]
@@ -203,6 +203,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 			], format='dok')
 
 			basis = mod2cpBasis(systemToSolve)
+			#print("Basis is ", basis)
 
 			# No more mod-2 cuts
 			if basis == []:
@@ -211,13 +212,17 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 				listOfLhs = []
 				rhs = []
 
+				print("Making cuts")
+
 				# Add cut from affine offset
 				cutAndDistance = systemAb.dot(basis[0])
 				cut = cutAndDistance[:noVariables, 0].transpose()
 				# round down RHS
 				distance = cutAndDistance[noVariables, 0] - 1
+
+				print("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
 				
-				polytopeProb.linear_constraints.add(lin_expr=[matrixRowToSparsePair(cut)], rhs=[distance], senses='L')
+				polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L')
 
 				# Add cut for each basis vector
 				for basisVector in basis[1]:
@@ -225,10 +230,10 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 					cut = cutAndDistance[:noVariables, 0].transpose()
 					distance = cutAndDistance[noVariables, 0] - 1
 
-					listOfLhs.append(matrixRowToSparsePair(cut))
-					rhs.append(distance)
+					print("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
 
-					polytopeProb.linear_constraints.add(lin_expr=[matrixRowToSparsePair(cut)], rhs=[distance], senses='L')
+
+					polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L')
 
 			polytopeProb.solve()
 
