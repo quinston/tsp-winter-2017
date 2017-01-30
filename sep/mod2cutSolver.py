@@ -185,14 +185,16 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 			# This will hold (A|b)^T
 			systemAb = scipy.sparse.dok_matrix((A.shape[1] + 1, A.shape[0]))
 
-			systemAb[:, :noAlwaysTightInequalities] = scipy.sparse.vstack(
+			systemAb[:, :(noAlwaysTightInequalities // 2)] = scipy.sparse.vstack(
 				[
-					A[:noAlwaysTightInequalities, :].transpose(), 
-					b[:noAlwaysTightInequalities, :].transpose()
-				], format='dok')
+					# ::2 is for skipping all the double inequalities (which lead to equality)
+					A[:noAlwaysTightInequalities:2, :].transpose(), 
+					b[:noAlwaysTightInequalities:2, :].transpose()
+				], format='coo')
 
-			numConstraint = noAlwaysTightInequalities
-			numColumnInSystemAb = noAlwaysTightInequalities
+
+			numConstraint = noAlwaysTightInequalities // 2
+			numColumnInSystemAb = noAlwaysTightInequalities // 2
 			while numConstraint < noOriginalConstraints:
 				# Do not use constraints where x or z is nonzero
 				if pointToSeparate[numConstraint - noAlwaysTightInequalities] == 0:
