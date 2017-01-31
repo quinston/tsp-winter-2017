@@ -193,7 +193,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 				], format='coo')
 
 
-			numConstraint = noAlwaysTightInequalities // 2
+			numConstraint = noAlwaysTightInequalities 
 			numColumnInSystemAb = noAlwaysTightInequalities // 2
 			while numConstraint < noOriginalConstraints:
 				# Do not use constraints where x or z is nonzero
@@ -221,8 +221,12 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 			if basis == []:
 				break
 			else:
-				listOfLhs = []
-				rhs = []
+
+				# Takes a list of the form [0,1,0,0,1,0,1,0]
+				# and returns equation/inequality labels
+				def labelMod2Cut(v):
+					labels = ["e{}".format(i) for i,e in enumerate(edges, 1) if vinf not in e] + ["f{}".format(i) for i,f in enumerate(dualVertices, 1) if vinf not in f] + ["v{}".format(i) for i in range(1, len(vertices) + 1)]+ [xVariable for i,xVariable in enumerate(variableNames) if xVariable[0] == "x" and pointToSeparate[i] == 0] + [zVariable for i,zVariable in enumerate(variableNames) if zVariable[0] == "z" and pointToSeparate[i] == 0]
+					return [a for a,b in zip(labels, v) if b != 0]
 
 				logging.info("Making cuts")
 
@@ -233,6 +237,8 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 				distance = cutAndDistance[noVariables, 0] - 1
 
 				logging.info("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
+
+				logging.info("Decomposition: {}".format(labelMod2Cut(basis[0].transpose().tolist()[0])))
 				
 				polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L')
 
@@ -243,6 +249,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 					distance = cutAndDistance[noVariables, 0] - 1
 
 					logging.info("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
+					logging.info("Decomposition: {}".format(labelMod2Cut(basisVector.transpose().tolist()[0])))
 
 
 					polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L')
