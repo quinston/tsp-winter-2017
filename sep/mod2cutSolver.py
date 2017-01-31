@@ -169,6 +169,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 
 		pointToSeparate = polytopeProb.solution.get_values()
 		logging.info('Initial point: {}'.format(sparselyLabel(pointToSeparate)))
+		logging.info('Objective value: {}'.format(polytopeProb.get_objective_value()))
 
 		""" 
 		The equations that x* satisfies tightly are all the equations, and
@@ -262,6 +263,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 
 			pointToSeparate = polytopeProb.solution.get_values()
 			logging.info('New point is {}'.format(sparselyLabel(pointToSeparate)))
+			logging.info('Objective value {}'.format(polytopeProb.solution.get_objective_value()))
 
 		logging.info('No more mod 2 cuts')
 
