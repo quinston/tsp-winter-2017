@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import scipy.sparse
 import cplex
-from cplex.exceptions import CplexError
+from cplex.exceptions import CplexError, CplexSolverError
+from cplex.exceptions.error_codes import CPXERR_NO_SOLN
 import inequalities
 import numpy
 import logging
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(ch)
@@ -182,7 +183,47 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 		# This counts the number of equations in the extended formulation, times 2 for <= and >=
 		noAlwaysTightInequalities = noOriginalConstraints - noVariables
 
+		"""
+		Keep track of every added cut. 
+
+		Whenever a cut is found to have 0 dual value, increase its age.
+		If its age reaches maxCutAge, delete the cut.
+		Whenever a cut is found to have nonzero dual value, set its age to 0.
+		"""
+		maxCutAge = 10
+		cutsToAges = {}
+
+		def randomCutName():
+			i = 0
+			while True:
+				yield "mod2cut{}".format(i)
+				i += 1
+		cutNameGenerator = randomCutName()
+
 		while True:
+
+			# Get rid of old cuts from the LP
+			dualValues = polytopeProb.solution.get_dual_values()
+			cutNames = list(cutsToAges.keys())
+			for cutName in cutNames:
+				logging.debug("Checking on cut {}".format(cutName))
+				try:
+					if polytopeProb.solution.get_dual_values(cutName) == 0:
+						cutsToAges[cutName] += 1
+						if cutsToAges[cutName] == maxCutAge:
+							polytopeProb.linear_constraints.delete(cutName)
+							logging.debug("Deleting cut {}".format(cutName))
+							del cutsToAges[cutName]
+					else:
+						cutsToAges[cutName] = 0
+				except CplexSolverError as e:
+					if e.args[2] == CPXERR_NO_SOLN:
+						logging.debug("CPLEX has deleted cut {}".format(cutName))
+						del cutsToAges[cutName]
+					else:
+						raise e
+
+
 			# This will hold (A|b)^T
 			systemAb = scipy.sparse.dok_matrix((A.shape[1] + 1, A.shape[0]))
 
@@ -227,7 +268,8 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 				# and returns equation/inequality labels
 				def labelMod2Cut(v):
 					labels = ["e{}".format(i) for i,e in enumerate(edges, 1) if vinf not in e] + ["f{}".format(i) for i,f in enumerate(dualVertices, 1) if vinf not in f] + ["v{}".format(i) for i in range(1, len(vertices) + 1)]+ [xVariable for i,xVariable in enumerate(variableNames) if xVariable[0] == "x" and pointToSeparate[i] == 0] + [zVariable for i,zVariable in enumerate(variableNames) if zVariable[0] == "z" and pointToSeparate[i] == 0]
-					return [a for a,b in zip(labels, v) if b != 0]
+					assert(len(labels) == len(v))
+					return [(a,b) for a,b in zip(labels, v) if b != 0]
 
 				logging.info("Making cuts")
 
@@ -241,19 +283,27 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 
 				logging.info("Decomposition: {}".format(labelMod2Cut(basis[0].transpose().tolist()[0])))
 				
-				polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L')
+				cutName = next(cutNameGenerator)
+				polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L', names=[cutName])
+				# Start keeping track of this cut
+				cutsToAges[cutName] = 0
+				logging.debug("Adding cut {}".format(cutName))
 
 				# Add cut for each basis vector
 				for basisVector in basis[1]:
-					cutAndDistance = systemAb.dot(basis[0] + basisVector)
+					coefficientVector = basis[0] + basisVector
+					cutAndDistance = systemAb.dot(coefficientVector)
 					cut = cutAndDistance[:noVariables, 0].transpose()
 					distance = cutAndDistance[noVariables, 0] - 1
 
 					logging.info("{} <= {}".format(sparselyLabel(cut.tolist()), distance))
-					logging.info("Decomposition: {}".format(labelMod2Cut(basisVector.transpose().tolist()[0])))
+					logging.info("Decomposition: {}".format(labelMod2Cut(coefficientVector.transpose().tolist()[0])))
+					logging.info("Without the offset: {}".format(labelMod2Cut(basisVector.transpose().tolist()[0])))
 
-
-					polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L')
+					cutName = next(cutNameGenerator)
+					polytopeProb.linear_constraints.add(lin_expr=[rowToSparsePair(cut)], rhs=[distance], senses='L', names=[cutName])
+					cutsToAges[cutName] = 0
+					logging.debug("Adding cut {}".format(cutName))
 
 			polytopeProb.solve()
 

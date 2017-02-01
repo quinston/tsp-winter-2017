@@ -1,11 +1,13 @@
 
 """
-Returns V, E, V*, E*
+Returns V, E, V*, E*, weights
 """
 def readUsa532():
 	# Note the vertices start at 0
 	# but we are going to make them start at 1
 	V = list(range(1, 532+1))
+
+	weights = {}
 
 	E = []
 	# format is V V w_e
@@ -15,6 +17,7 @@ def readUsa532():
 		for line in f:
 			l = [int(x) for x in line.split()]
 			E.append((l[0] + 1, l[1] + 1))
+			weights[E[-1]] = l[2]
 
 
 	Estar = []
@@ -43,12 +46,13 @@ def readUsa532():
 
 	assert (len(V) + len(Vstar) - len(E) == 2)
 
-	return (V,E,Vstar,Estar)
+	return (V,E,Vstar,Estar, weights)
 
 if __name__ == '__main__':
-	vinf = 1
+	vinf = 10
+	weights = None
 	import gridGraph
-	V, E, Vstar, Estar = gridGraph.gridGraph(6)
-	#V, E, Vstar, Estar = readUsa532()
+	V, E, Vstar, Estar = gridGraph.gridGraph(12)
+	# V, E, Vstar, Estar, weights = readUsa532()
 	import mod2cutSolver
-	mod2cutSolver.mod2cutsLoop(V, E, Vstar, Estar, vinf)
+	mod2cutSolver.mod2cutsLoop(V, E, Vstar, Estar, vinf, weights)
