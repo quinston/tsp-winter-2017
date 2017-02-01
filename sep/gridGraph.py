@@ -67,9 +67,13 @@ if __name__ == '__main__':
 	gridWidth = int(sys.argv[2])
 	V, E, Vstar, Estar = rectangularGridGraph(gridHeight, gridWidth) 
 	vinf = int(sys.argv[3])
-	weights = dict(itertools.product(E, (1,)))
+	# weights = dict(itertools.product(E, (1,)))
+	# weights[(1,2)] = weights[(1, gridWidth + 1)] = weights[(2, gridWidth + 2)] = weights[(gridWidth + 1, gridWidth + 2)] = 10
 
-	weights[(1,2)] = weights[(1, gridWidth + 1)] = weights[(2, gridWidth + 2)] = weights[(gridWidth + 1, gridWidth + 2)] = 10
+	import random
+	weights = dict((e, random.random()) for e in E)
+
+	print(weights)
 
 	def outputGridDisplayerFormat(filename, pt):
 		with open(filename, 'w') as f:
@@ -80,7 +84,7 @@ if __name__ == '__main__':
 
 	import findTspCps
 	i = 0
-	for (cp, _, x) in findTspCps.findCps(V, E, Vstar, Estar, vinf, weights):
+	for (cp, _, x) in findTspCps.findCps(V, E, Vstar, Estar, vinf, weights, forceXpositive=True, forceZpositive=True):
 		outputGridDisplayerFormat("grid.cp{}".format(i), [(a,-b) for a,b in cp])
 		outputGridDisplayerFormat("grid.point{}".format(i), x)
 		i += 1

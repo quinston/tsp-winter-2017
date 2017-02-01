@@ -2,7 +2,9 @@
 # yields pairs (cp, distance, x) where cp*x <= distance is a cutting plane that cuts off x
 # cp, x are sparse labelled vectors (i.e. list of 2-ples of label and value)
 
-def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
+def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None, 
+forceXto0=False, forceXpositive=False, forceZto0=False, forceZpositive=False,
+sparseCoefficients=True, unboundedCoefficients=False):
 	import sys
 	import cplex
 	from cplex.exceptions import CplexError
@@ -77,18 +79,36 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 			# Here we modify the default CGSEP programme for our educational purposes
 
 			# force x_e = u^T A_j = 0 for cutting plane 
-			cpProb.linear_constraints.add(
-					lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
-						val=[row[j-1] for row in A]) for j in range(1, len(edges)+1)],
-					rhs=[0] * len(edges), 
-					senses='E' * len(edges))
+			if forceXto0:
+				cpProb.linear_constraints.add(
+						lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
+							val=[row[j-1] for row in A]) for j in range(1, len(edges)+1)],
+						rhs=[0] * len(edges), 
+						senses='E' * len(edges))
 
 			# force (-z_e,v <= 0)  z_e,v >= 0
-			cpProb.linear_constraints.add(
-					lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
-						val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(variableNames)+1)],
-					rhs=[0] * (len(variableNames) - len(edges)), 
-					senses='L' * (len(variableNames) - len(edges)))
+			if forceZpositive:
+				cpProb.linear_constraints.add(
+						lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
+							val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(variableNames)+1)],
+						rhs=[0] * (len(variableNames) - len(edges)), 
+						senses='L' * (len(variableNames) - len(edges)))
+
+			# force -x_e <= 0 (x_e >= 0)
+			if forceXpositive:
+				cpProb.linear_constraints.add(
+						lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
+							val=[row[j-1] for row in A]) for j in range(1, len(edges)+1)],
+						rhs=[0] * len(edges), 
+						senses='L' * len(edges))
+
+			# force  z_e,v = 0
+			if forceZto0:
+				cpProb.linear_constraints.add(
+						lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
+							val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(variableNames)+1)],
+						rhs=[0] * (len(variableNames) - len(edges)), 
+						senses='E' * (len(variableNames) - len(edges)))
 
 			# only accept rank 1 chvatal cuts
 			cuttingPlaneIndices = range(originalNoEquations + 1, originalNoEquations + noCuttingPlanes + 1)
@@ -99,10 +119,12 @@ def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None):
 						senses='E')
 
 			# don't care about sparse combinations
-			cpProb.objective.set_linear([("u{}".format(i), 0) for i in range(1, len(A)+1)])
+			if sparseCoefficients:
+				cpProb.objective.set_linear([("u{}".format(i), 0) for i in range(1, len(A)+1)])
 
 			# allow arbitrary coefficients
-			cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
+			if unboundedCoefficients:
+				cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
 
 			cpProb.write('cg.cut{}.lp'.format(noCuttingPlanes))
 	
