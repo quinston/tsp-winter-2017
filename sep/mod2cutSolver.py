@@ -8,7 +8,7 @@ import numpy
 import logging
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(ch)
@@ -42,7 +42,8 @@ def mod2rref(Ab):
 				rowIndicesToAddPivotRowTo = [i for i in xrange(noRows) if i != pivot and Ab[i, numColumn] == 1]
 
 				for index in rowIndicesToAddPivotRowTo:
-					Ab[index, :] = (Ab[index, :] + pivotRow) % 2
+					# xor is mod 2 addition
+					Ab[index, :] = Ab[index, :] ^ pivotRow
 
 				# Bring pivot row to top
 				Ab[numRow, :] = Ab[currentPivotRow, :]
@@ -225,7 +226,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 
 
 			# This will hold (A|b)^T
-			systemAb = scipy.sparse.dok_matrix((A.shape[1] + 1, A.shape[0]))
+			systemAb = scipy.sparse.dok_matrix((A.shape[1] + 1, A.shape[0]), dtype='b')
 
 			systemAb[:, :(noAlwaysTightInequalities // 2)] = scipy.sparse.vstack(
 				[
@@ -272,6 +273,8 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 					return [(a,b) for a,b in zip(labels, v) if b != 0]
 
 				logging.info("Making cuts")
+				# We must convert since CPLEX requires floats
+				systemAb = systemAb.astype("float_")
 
 				# Add cut from affine offset
 				cutAndDistance = systemAb.dot(basis[0])
@@ -291,7 +294,7 @@ val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
 
 				# Add cut for each basis vector
 				for basisVector in basis[1]:
-					coefficientVector = basis[0] + basisVector
+					coefficientVector = basis[0] ^ basisVector
 					cutAndDistance = systemAb.dot(coefficientVector)
 					cut = cutAndDistance[:noVariables, 0].transpose()
 					distance = cutAndDistance[noVariables, 0] - 1
