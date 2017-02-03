@@ -13,7 +13,7 @@ class TriangularGridGraph(Canvas):
 		noEdges = (height-1)*(self.EDGES_PER_LOGICAL_ROW) + (width-1)
 		for i in range(1, noEdges+1):
 			self.drawEdge(i, data)
-			# self.drawArcs(i, data)
+			self.drawArcs(i, data)
 
 		self.drawVinf(vinf)
 		
@@ -83,6 +83,94 @@ class TriangularGridGraph(Canvas):
 			# draw edge weight on centre of edge
 			if not isVoid and data[edgeName] != 1:
 				self.create_text(self.TOP_LEFT_CORNER[0] + int(self.CELL_PIXEL_WIDTH * (horizontalPosition + 0.5)), self.TOP_LEFT_CORNER[1] + int(self.CELL_PIXEL_WIDTH * (verticalPosition + 0.5)), text=TriangularGridGraph.formatNumber(data[edgeName]), fill='blue')
+
+	def drawArcs(self, e, data):
+		isVertical = (e-1) % self.EDGES_PER_LOGICAL_ROW < (self.GRID_WIDTH - 1)
+		isNotVerticalAndHorizontal = (e - self.GRID_WIDTH) % 2 == 0
+
+		unboundedFace = (self.GRID_WIDTH - 1)*2*(self.GRID_HEIGHT - 1) + 1
+
+		if isVertical:
+			horizontalPosition = (e-1) % (self.EDGES_PER_LOGICAL_ROW)
+			verticalPosition = (e-1) // (self.EDGES_PER_LOGICAL_ROW)
+
+			upFace, downFace = (0, 0)
+			if verticalPosition == 0:
+				upFace = unboundedFace 
+				downFace = horizontalPosition + 1 
+			elif verticalPosition == self.GRID_HEIGHT - 1:
+				upFace = (verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+				downFace = unboundedFace
+			else:
+				upFace = (verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+				downFace = (verticalPosition - 0) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+
+			for face, direction, offset in ((upFace, "first", self.CELL_PIXEL_WIDTH//3), (downFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
+				edgeName = "z{},{}".format(e, face)
+				isVoid = edgeName not in data or data[edgeName] == 0
+
+				if not isVoid:
+					if data[edgeName] != 1:
+						lineColour = "green"
+					else:
+						lineColour = "black"
+				else:
+					lineColour = self.VOID_COLOUR
+				
+				self.create_line(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
+						self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
+						arrow = direction,
+						fill = lineColour,
+						width=3)
+
+				if not isVoid and data[edgeName] != 1:
+					self.create_text(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition, 
+					# stagger the text for vertical arrow pairs
+					self.TOP_LEFT_CORNER[1] + ((1 if direction == "first" else -1) * self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * verticalPosition,
+ text=GridGraph.formatNumber(data[edgeName]), fill='blue')
+
+		elif isNotVerticalAndHorizontal:
+			# horizontal
+			horizontalPosition = (((e-1) % self.EDGES_PER_LOGICAL_ROW) - (self.GRID_WIDTH - 1)) // 2
+			verticalPosition = ((e-1) // self.EDGES_PER_LOGICAL_ROW) 
+
+			leftFace, rightFace = (0,0)
+			if horizontalPosition == 0:
+				leftFace = unboundedFace
+				rightFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+			elif horizontalPosition == self.GRID_WIDTH - 1:
+				leftFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition 
+				rightFace = unboundedFace
+			else:
+				leftFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition 
+				rightFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+
+			for face, direction, offset in ((leftFace, "first", self.CELL_PIXEL_WIDTH//3), (rightFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
+				edgeName = "z{},{}".format(e, face)
+				isVoid = edgeName not in data or data[edgeName] == 0
+
+				if not isVoid:
+					if data[edgeName] != 1:
+						lineColour = "green"
+					else:
+						lineColour = "black"
+				else:
+					lineColour = self.VOID_COLOUR
+				
+				self.create_line(self.TOP_LEFT_CORNER[0] - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
+						self.TOP_LEFT_CORNER[0] + (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
+						arrow = direction,
+						fill = lineColour,
+						width=3)
+
+				if not isVoid and data[edgeName] != 1:
+					self.create_text(self.TOP_LEFT_CORNER[0] + (self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
+ text="{:.3f}".format(data[edgeName]), fill='blue')
 
 def displayTriangularGrid(height, width, vinf, data):
 	root = Tk()
