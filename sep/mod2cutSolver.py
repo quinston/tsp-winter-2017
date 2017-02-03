@@ -23,7 +23,8 @@ except NameError:
 Ab: (A|b) the constraints and rhs put together in a dok_matrix. Modifies this in-place
 """
 def mod2rref(Ab):
-	Ab = Ab.todense() % 2
+	# Reduce mod 2
+	Ab = Ab.todense() & 1
 
 
 	# Gauss Jordan elimination
