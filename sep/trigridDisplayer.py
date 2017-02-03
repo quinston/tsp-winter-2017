@@ -1,4 +1,6 @@
 from tkinter import *
+from tkinter.font import nametofont 
+
 class TriangularGridGraph(Canvas):
 	def __init__(self, master, height, width, vinf, data):
 		super().__init__(master)
@@ -99,13 +101,13 @@ class TriangularGridGraph(Canvas):
 				upFace = unboundedFace 
 				downFace = horizontalPosition + 1 
 			elif verticalPosition == self.GRID_HEIGHT - 1:
-				upFace = (verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+				upFace = 2*((verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition) + 1
 				downFace = unboundedFace
 			else:
 				upFace = (verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
 				downFace = (verticalPosition - 0) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
 
-			for face, direction, offset in ((upFace, "first", self.CELL_PIXEL_WIDTH//3), (downFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
+			for face, direction, offset in ((upFace, "first", self.CELL_PIXEL_WIDTH * 2 // 9), (downFace, "last", self.CELL_PIXEL_WIDTH * 7 // 9)):
 				edgeName = "z{},{}".format(e, face)
 				isVoid = edgeName not in data or data[edgeName] == 0
 
@@ -129,7 +131,7 @@ class TriangularGridGraph(Canvas):
 					self.create_text(self.TOP_LEFT_CORNER[0] + offset + self.CELL_PIXEL_WIDTH * horizontalPosition, 
 					# stagger the text for vertical arrow pairs
 					self.TOP_LEFT_CORNER[1] + ((1 if direction == "first" else -1) * self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * verticalPosition,
- text=GridGraph.formatNumber(data[edgeName]), fill='blue')
+ text=TriangularGridGraph.formatNumber(data[edgeName]), fill='blue')
 
 		elif isNotVerticalAndHorizontal:
 			# horizontal
@@ -139,13 +141,13 @@ class TriangularGridGraph(Canvas):
 			leftFace, rightFace = (0,0)
 			if horizontalPosition == 0:
 				leftFace = unboundedFace
-				rightFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+				rightFace = 2*((verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition) + 1
 			elif horizontalPosition == self.GRID_WIDTH - 1:
-				leftFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition 
+				leftFace = 2*((verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition) + 0
 				rightFace = unboundedFace
 			else:
-				leftFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition 
-				rightFace = (verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+				leftFace = 2*((verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition) + 0
+				rightFace = 2*((verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition) + 1
 
 			for face, direction, offset in ((leftFace, "first", self.CELL_PIXEL_WIDTH//3), (rightFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
 				edgeName = "z{},{}".format(e, face)
@@ -172,12 +174,50 @@ class TriangularGridGraph(Canvas):
 						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition,
  text="{:.3f}".format(data[edgeName]), fill='blue')
 
+		else:
+			# diagonal
+			horizontalPosition = (((e-1) % self.EDGES_PER_LOGICAL_ROW) - (self.GRID_WIDTH - 1)) // 2
+			verticalPosition = ((e-1) // self.EDGES_PER_LOGICAL_ROW) 
+
+			leftFace = 2* ((verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition ) + 1
+			rightFace = 2*((verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition ) + 2
+
+			for face, direction, offset in ((leftFace, "first", self.CELL_PIXEL_WIDTH//3), (rightFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
+				edgeName = "z{},{}".format(e, face)
+				isVoid = edgeName not in data or data[edgeName] == 0
+
+				if not isVoid:
+					if data[edgeName] != 1:
+						lineColour = "green"
+					else:
+						lineColour = "black"
+				else:
+					lineColour = self.VOID_COLOUR
+				
+				self.create_line(self.TOP_LEFT_CORNER[0] + offset - (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + offset + (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * verticalPosition,
+						self.TOP_LEFT_CORNER[0] + offset + (self.ARROW_PIXEL_LENGTH // 2) + self.CELL_PIXEL_WIDTH * horizontalPosition,
+						self.TOP_LEFT_CORNER[1] + offset - (self.ARROW_PIXEL_LENGTH // 2) +  self.CELL_PIXEL_WIDTH * verticalPosition,
+						arrow = direction,
+						fill = lineColour,
+						width=3)
+
+				# to make label text not be on the same line as other arrows
+				stagger = 8
+
+				if not isVoid and data[edgeName] != 1:
+					self.create_text(self.TOP_LEFT_CORNER[0] + offset + (self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * horizontalPosition ,
+						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition - stagger,
+ text="{:.3f}".format(data[edgeName]), fill='blue')
+
 def displayTriangularGrid(height, width, vinf, data):
 	root = Tk()
 	root.columnconfigure(0, weight=1)
 	root.rowconfigure(0, weight=1)
 	g1 = TriangularGridGraph(root, height=height, width=width, vinf=vinf, data=data)
 	g1.grid(row=0, column=0, sticky=(N,E,W,S))
+
+	nametofont("TkDefaultFont").configure(size=10,weight='bold')
 
 	windowWidth = g1.CELL_PIXEL_WIDTH * (width + 1)
 	windowHeight = g1.CELL_PIXEL_WIDTH * (height + 1)
@@ -192,3 +232,11 @@ if __name__ == '__main__':
 		vinf = int(input('vinf '))
 		data = dict(eval(input('data ')))
 		displayTriangularGrid(height, width, vinf, data)
+
+""" try me
+4
+6
+17
+{'x6': 6, 'x7': 7, 'x16': 16, 'x17': 17, 'x2': 2,  'z6,31': 31, 'z7,1': 1.01, 'z7,2': 2.02, 'z8,2': 2, 'z6,1': 1.001, 'z8,3': 8.3, 'z38,31': 38.31, 'z48,31': 48.31, 'z53,29': 53.29, 'z52,27': 52.27, 'z53,31': 53.31, 'z27,15': 27.15, 'z27,16':27.16}
+"""
+
