@@ -77,8 +77,8 @@ class GridGraph(Canvas):
 
 	def drawArcs(self, e, data):
 		isVertical = (e-1) % (self.GRID_WIDTH * 2 - 1) < (self.GRID_WIDTH - 1)
-		isExterior = (((e-1) % (self.GRID_WIDTH * 2 - 1)) in [self.GRID_WIDTH - 1, self.GRID_WIDTH * 2 - 2]) or (((e-1) // (self.GRID_WIDTH * 2 - 1)) in [0, self.GRID_WIDTH])
-		unboundedFace = (self.GRID_WIDTH - 1)**2 + 1
+		isExterior = (((e-1) % (self.GRID_WIDTH * 2 - 1)) in [self.GRID_WIDTH - 1, self.GRID_WIDTH * 2 - 2]) or (((e-1) // (self.GRID_WIDTH * 2 - 1)) in [0, self.GRID_HEIGHT - 1])
+		unboundedFace = (self.GRID_WIDTH - 1)*(self.GRID_HEIGHT - 1) + 1
 
 		if isVertical:
 			horizontalPosition = (e-1) % (self.GRID_WIDTH * 2 - 1)
@@ -88,7 +88,7 @@ class GridGraph(Canvas):
 			if verticalPosition == 0:
 				upFace = unboundedFace 
 				downFace = horizontalPosition + 1 
-			elif verticalPosition == self.GRID_WIDTH - 1:
+			elif verticalPosition == self.GRID_HEIGHT - 1:
 				upFace = (verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
 				downFace = unboundedFace
 			else:
