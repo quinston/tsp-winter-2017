@@ -104,8 +104,9 @@ class TriangularGridGraph(Canvas):
 				upFace = 2*((verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition) + 1
 				downFace = unboundedFace
 			else:
-				upFace = (verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
-				downFace = (verticalPosition - 0) * (self.GRID_WIDTH - 1) + horizontalPosition + 1
+				upFace = 2*((verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition) + 1
+				# +1+1 since the orientation of the down face differs from the up face (from upper triangular to lower triangular face)
+				downFace = 2*((verticalPosition + 0) * (self.GRID_WIDTH - 1) + horizontalPosition) + 2
 
 			for face, direction, offset in ((upFace, "first", self.CELL_PIXEL_WIDTH * 2 // 9), (downFace, "last", self.CELL_PIXEL_WIDTH * 7 // 9)):
 				edgeName = "z{},{}".format(e, face)
