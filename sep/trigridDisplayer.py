@@ -99,7 +99,7 @@ class TriangularGridGraph(Canvas):
 			upFace, downFace = (0, 0)
 			if verticalPosition == 0:
 				upFace = unboundedFace 
-				downFace = horizontalPosition + 1 
+				downFace = 2*horizontalPosition + 2
 			elif verticalPosition == self.GRID_HEIGHT - 1:
 				upFace = 2*((verticalPosition - 1) * (self.GRID_WIDTH - 1) + horizontalPosition) + 1
 				downFace = unboundedFace
@@ -218,7 +218,7 @@ def displayTriangularGrid(height, width, vinf, data):
 	g1 = TriangularGridGraph(root, height=height, width=width, vinf=vinf, data=data)
 	g1.grid(row=0, column=0, sticky=(N,E,W,S))
 
-	nametofont("TkDefaultFont").configure(size=12,weight='bold')
+	nametofont("TkDefaultFont").configure(size=10,weight='bold')
 
 	windowWidth = g1.CELL_PIXEL_WIDTH * (width + 1)
 	windowHeight = g1.CELL_PIXEL_WIDTH * (height + 1)
