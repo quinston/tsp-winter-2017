@@ -13,6 +13,7 @@ sparseCoefficients=True, unboundedCoefficients=False):
 	import math
 
 	variableNames = inequalities.enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf)
+
 	# Create a list of pairs omitting zero entries 
 	def sparselyLabel(v):
 		return [(a,b) for a,b in zip(variableNames, v) if b != 0]
@@ -21,13 +22,15 @@ sparseCoefficients=True, unboundedCoefficients=False):
 
 	objectiveFunction = None
 	if weights == None:
-		objectiveFunction = [1] * len(edges)
+		objectiveFunction = [1] * len(variableNames)
 	else:
 		objectiveFunction = [weights[e] for e in edges] + [0] * (len(variableNames) - len(edges))
 
 	polytopeProb = cplex.Cplex()
 	try:
 		polytopeProb.objective.set_sense(polytopeProb.objective.sense.minimize)
+
+		print(len(variableNames))
 		
 		polytopeProb.variables.add(names = variableNames,
 				obj = objectiveFunction,
@@ -46,8 +49,14 @@ sparseCoefficients=True, unboundedCoefficients=False):
 
 		polytopeProb.linear_constraints.add(lin_expr = Alol, rhs = b, senses = 'L' * len(b)) 
 
-		polytopeProb.set_results_stream(None)
+		#polytopeProb.set_results_stream(None)
 		polytopeProb.write('polytope.lp')
+
+		# For convenience, add binary section for the variables
+		with open('polytope.lp', 'a') as f:
+			print("Binary", file=f)
+			print("\n".join(variableNames), file=f)
+
 		polytopeProb.solve()
 		if not polytopeProb.solution.is_primal_feasible():
 			print('Original subtour polytope is empty')
@@ -128,7 +137,7 @@ sparseCoefficients=True, unboundedCoefficients=False):
 
 			cpProb.write('cg.cut{}.lp'.format(noCuttingPlanes))
 	
-			cpProb.set_results_stream(None)
+			#cpProb.set_results_stream(None)
 			print("Finding a cutting plane...")
 			cpProb.solve()
 	
@@ -159,14 +168,14 @@ sparseCoefficients=True, unboundedCoefficients=False):
 					rhs = [cpDistance],
 					senses = 'L')
 
-			polytopeProb.set_results_stream(None)
+			#polytopeProb.set_results_stream(None)
 			noCuttingPlanes += 1
 			polytopeProb.write('polytope.cut{}.lp'.format(noCuttingPlanes))
 			polytopeProb.solve()
 
 			if not polytopeProb.solution.is_primal_feasible():
-				print("Problem no longer feasible, outputing to polytope.lp")
-				polytopeProb.write('polytope.lp')
+				print("Problem no longer feasible, outputing to polytope.infeasible.lp")
+				polytopeProb.write('polytope.infeasible.lp')
 				break
 
 
