@@ -20,7 +20,10 @@ class TriangularGridGraph(Canvas):
 		self.drawVinf(vinf)
 		
 	def formatNumber(num):
-		return "{:.3f}".format(num)
+		if num == int(num):
+			return str(num)
+		else:
+			return "{:.3f}".format(num)
 
 	def drawVinf(self, v):
 		horizontalPosition = (v-1) % self.GRID_WIDTH
