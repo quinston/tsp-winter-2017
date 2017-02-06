@@ -60,7 +60,7 @@ class TriangularGridGraph(Canvas):
 			if not isVoid and data[edgeName] != 1:
 				self.create_text(self.TOP_LEFT_CORNER[0] + int(self.CELL_PIXEL_WIDTH * (horizontalPosition + 0.5)), self.TOP_LEFT_CORNER[1] + self.CELL_PIXEL_WIDTH * verticalPosition, text=TriangularGridGraph.formatNumber(data[edgeName]), fill='blue')
 
-		elif (((e - 1) % self.EDGES_PER_LOGICAL_ROW) - self.GRID_WIDTH) % 2 == 1:
+		elif (((e-1) % (self.EDGES_PER_LOGICAL_ROW)) - self.GRID_WIDTH) % 2 == 1:
 			horizontalPosition = (((e-1) % (self.EDGES_PER_LOGICAL_ROW)) - (self.GRID_WIDTH - 1)) // 2
 			verticalPosition = ((e-1) // (self.EDGES_PER_LOGICAL_ROW)) 
 			# Vertical line
@@ -91,7 +91,7 @@ class TriangularGridGraph(Canvas):
 
 	def drawArcs(self, e, data):
 		isVertical = (e-1) % self.EDGES_PER_LOGICAL_ROW < (self.GRID_WIDTH - 1)
-		isNotVerticalAndHorizontal = (e - self.GRID_WIDTH) % 2 == 0
+		isNotVerticalAndHorizontal = (((e-1) % self.EDGES_PER_LOGICAL_ROW) - self.GRID_WIDTH) % 2 == 1
 
 		unboundedFace = (self.GRID_WIDTH - 1)*2*(self.GRID_HEIGHT - 1) + 1
 
