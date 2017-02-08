@@ -1,0 +1,30 @@
+2017-02-02 17:42:11,994 - INFO - Added constraint 0
+2017-02-02 17:42:12,900 - INFO - Added constraint 100
+2017-02-02 17:42:13,797 - INFO - Added constraint 200
+2017-02-02 17:42:14,690 - INFO - Added constraint 300
+2017-02-02 17:42:15,591 - INFO - Added constraint 400
+2017-02-02 17:42:16,489 - INFO - Added constraint 500
+2017-02-02 17:42:17,387 - INFO - Added constraint 600
+2017-02-02 17:42:18,288 - INFO - Added constraint 700
+2017-02-02 17:42:19,185 - INFO - Added constraint 800
+2017-02-02 17:42:20,082 - INFO - Added constraint 900
+2017-02-02 17:42:20,984 - INFO - Added constraint 1000
+2017-02-02 17:42:21,884 - INFO - Added constraint 1100
+2017-02-02 17:42:22,788 - INFO - Added constraint 1200
+Traceback (most recent call last):
+  File "usa532.py", line 58, in <module>
+    mod2cutSolver.mod2cutsLoop(V, E, Vstar, Estar, vinf, weights)
+  File "/Users/qllam/winter-2017-research/sep/mod2cutSolver.py", line 165, in mod2cutsLoop
+    polytopeProb.linear_constraints.add(lin_expr = [dokRowToSparsePair(A[numRow, :])], rhs = [b[numRow, 0]], senses = 'L')
+  File "/Users/qllam/winter-2017-research/sep/mod2cutSolver.py", line 143, in dokRowToSparsePair
+    return cplex.SparsePair(ind = [name for i,name in enumerate(variableNames) if row[0, i] != 0], 
+  File "/Users/qllam/winter-2017-research/sep/mod2cutSolver.py", line 143, in <listcomp>
+    return cplex.SparsePair(ind = [name for i,name in enumerate(variableNames) if row[0, i] != 0], 
+  File "/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/scipy/sparse/dok.py", line 139, in __getitem__
+    i, j = self._unpack_index(index)
+  File "/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/scipy/sparse/sputils.py", line 268, in _unpack_index
+    row, col = self._check_boolean(row, col)
+  File "/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages/scipy/sparse/sputils.py", line 310, in _check_boolean
+    from .base import isspmatrix  # ew...
+  File "<frozen importlib._bootstrap>", line 996, in _handle_fromlist
+KeyboardInterrupt
