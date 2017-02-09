@@ -34,8 +34,20 @@ if __name__ == '__main__':
 	width = int(sys.argv[2])
 	vinf = int(sys.argv[3])
 	V,E,Vstar,Estar = triangularGridGraph(height, width)
-	weights = None
+
+	import random
+	random.seed(0)
+
+	weights = dict((e, random.randint(1, 10)) for i,e in enumerate(E, 1))
 
 	import findTspCps
-	for _ in findTspCps.findCps(V,E,Vstar,Estar,vinf, weights):
-		pass
+	for _,_,x in findTspCps.findCps(V,E,Vstar,Estar,vinf,weights):
+		import concorde
+		# Turn this [("x1", 0.3), ("x2", 0.4) ...] into {1: 0.3, 2: 0.4}
+		concorde.produceEdgFormat(V, E, dict((int(a[1:]), b) for a,b in x if a[0] == "x"), allowNonintegerWeights=True)
+		break
+
+	"""
+	import concorde
+	concorde.produceEdgFormat(V, E, weights)
+	"""
