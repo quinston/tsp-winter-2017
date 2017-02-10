@@ -142,10 +142,9 @@ sparseCoefficients=True, unboundedCoefficients=False, halfInteger=False):
 			if unboundedCoefficients:
 				cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
 
-			# only allow half-integer coefficients but let them be unbounded nonnegative
-			# In practice this does not work at all
+			# only allow half-integer coefficients (0 or 1/2)
 			if halfInteger:
-				cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
+				# cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
 				# Add integer variables v_i, and then let u_i = v_i/2
 				cpProb.variables.add(obj = [0] * len(A), types = [cpProb.variables.type.integer] * len(A), names =["v{}".format(i) for i in range(1, len(A)+1)])
 				for i in range(1, len(A)+1): 
