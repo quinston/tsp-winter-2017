@@ -1,3 +1,10 @@
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger.addHandler(ch)
 
 # yields pairs (cp, distance, x) where cp*x <= distance is a cutting plane that cuts off x
 # cp, x are sparse labelled vectors (i.e. list of 2-ples of label and value)
@@ -30,7 +37,7 @@ sparseCoefficients=True, unboundedCoefficients=False):
 	try:
 		polytopeProb.objective.set_sense(polytopeProb.objective.sense.minimize)
 
-		print(len(variableNames))
+		logging.debug("Number of variables: %".format(len(variableNames)))
 		
 		polytopeProb.variables.add(names = variableNames,
 				obj = objectiveFunction,
@@ -59,11 +66,11 @@ sparseCoefficients=True, unboundedCoefficients=False):
 
 		polytopeProb.solve()
 		if not polytopeProb.solution.is_primal_feasible():
-			print('Original subtour polytope is empty')
+			logging.error('Original subtour polytope is empty')
 			return
 
 		pointToSeparate = polytopeProb.solution.get_values()
-		print('Initial point: {}'.format(sparselyLabel(pointToSeparate)))
+		logging.info('Initial point: {}'.format(sparselyLabel(pointToSeparate)))
 
 		def getPositiveSupport(x):
 				return set((i+1) for i in range(len(x)) if x[i] > 0)
@@ -73,7 +80,7 @@ sparseCoefficients=True, unboundedCoefficients=False):
 			u = [prob.solution.get_values('u{}'.format(i)) for i in range(1, len(A)+1)]
 			uA = [(prob.solution.get_values('a{}'.format(i)) if i in getPositiveSupport(pointToSeparate) else sum(u[j] * row[i-1] for j,row in enumerate(A))) for i in range(1, len(variableNames) + 1)]
 			floorUA = [math.floor(x) for x in uA]
-			print("Variables that need flooring, and amount to floor: {}".format(sparselyLabel([a - b for a,b in zip(uA, floorUA)])))
+			logging.debug("Variables that need flooring, and amount to floor: {}".format(sparselyLabel([a - b for a,b in zip(uA, floorUA)])))
 			return floorUA
 
 
@@ -138,24 +145,24 @@ sparseCoefficients=True, unboundedCoefficients=False):
 			cpProb.write('cg.cut{}.lp'.format(noCuttingPlanes))
 	
 			#cpProb.set_results_stream(None)
-			print("Finding a cutting plane...")
+			logging.debug("Finding a cutting plane...")
 			cpProb.solve()
 	
 			cpVector = [x for x in cpVectorFromProb(cpProb, pointToSeparate, A)]
 			cpLabelledVector = sparselyLabel(cpVector)
 			if len(cpLabelledVector) == 0:
-				print("Done")
+				logging.debug("Done")
 				yield ([], 0, sparselyLabel(pointToSeparate))
 				break
 			cpDistance = cpProb.solution.get_values()[0]
 
 			cpViolation = sum([c * x for c,x in zip(cpVector, pointToSeparate)]) - cpDistance 
 
-			print("Found cutting plane: ", cpLabelledVector)
+			logging.info("Found cutting plane: {}".format(cpLabelledVector))
 			# print a0
-			print("Found cutting plane: <=", cpDistance)
-			print("Linear combination is: \n{}".format("+\n".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
-			print("Violation: {}".format(cpViolation))
+			logging.info("Found cutting plane: <= {}".format(cpDistance))
+			logging.debug("Linear combination is: \n{}".format("+\n".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
+			logging.info("Violation: {}".format(cpViolation))
 
 			yield (cpLabelledVector, cpDistance, sparselyLabel(pointToSeparate))
 
@@ -174,14 +181,14 @@ sparseCoefficients=True, unboundedCoefficients=False):
 			polytopeProb.solve()
 
 			if not polytopeProb.solution.is_primal_feasible():
-				print("Problem no longer feasible, outputing to polytope.infeasible.lp")
+				logging.error("Problem no longer feasible, outputing to polytope.infeasible.lp")
 				polytopeProb.write('polytope.infeasible.lp')
 				break
 
 
 			pointToSeparate = polytopeProb.solution.get_values()
-			print("New point to separate: ", sparselyLabel(pointToSeparate))
-			print("Objective value: ", polytopeProb.solution.get_objective_value())
+			logging.info("New point to separate: {}".format(sparselyLabel(pointToSeparate)))
+			logging.info("Objective value: {}".format(polytopeProb.solution.get_objective_value()))
 
 
 
