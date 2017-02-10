@@ -11,7 +11,7 @@ logger.addHandler(ch)
 
 def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None, 
 forceXto0=False, forceXpositive=False, forceZto0=False, forceZpositive=False,
-sparseCoefficients=True, unboundedCoefficients=False):
+sparseCoefficients=True, unboundedCoefficients=False, halfInteger=False):
 	import sys
 	import cplex
 	from cplex.exceptions import CplexError
@@ -142,6 +142,19 @@ sparseCoefficients=True, unboundedCoefficients=False):
 			if unboundedCoefficients:
 				cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
 
+			# only allow half-integer coefficients but let them be unbounded nonnegative
+			# In practice this does not work at all
+			if halfInteger:
+				cpProb.variables.set_upper_bounds([("u{}".format(i), cplex.infinity) for i in range(1, len(A)+1)])
+				# Add integer variables v_i, and then let u_i = v_i/2
+				cpProb.variables.add(obj = [0] * len(A), types = [cpProb.variables.type.integer] * len(A), names =["v{}".format(i) for i in range(1, len(A)+1)])
+				for i in range(1, len(A)+1): 
+					cpProb.linear_constraints.add(
+						lin_expr = [cplex.SparsePair(ind=["u{}".format(i), "v{}".format(i)],
+						val = [1, -0.5])],
+						rhs = [0],
+						senses = 'E')
+
 			cpProb.write('cg.cut{}.lp'.format(noCuttingPlanes))
 	
 			#cpProb.set_results_stream(None)
@@ -151,7 +164,7 @@ sparseCoefficients=True, unboundedCoefficients=False):
 			cpVector = [x for x in cpVectorFromProb(cpProb, pointToSeparate, A)]
 			cpLabelledVector = sparselyLabel(cpVector)
 			if len(cpLabelledVector) == 0:
-				logging.debug("Done")
+				logging.info("Done")
 				yield ([], 0, sparselyLabel(pointToSeparate))
 				break
 			cpDistance = cpProb.solution.get_values()[0]
@@ -161,7 +174,7 @@ sparseCoefficients=True, unboundedCoefficients=False):
 			logging.info("Found cutting plane: {}".format(cpLabelledVector))
 			# print a0
 			logging.info("Found cutting plane: <= {}".format(cpDistance))
-			logging.debug("Linear combination is: \n{}".format("+\n".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
+			logging.info("Linear combination is: \n{}".format("+\n".join("{} * {})".format(cpProb.solution.get_values("u{}".format(j)), sparselyLabel(row)) for j,row in enumerate(A, 1) if cpProb.solution.get_values("u{}".format(j)) != 0)))
 			logging.info("Violation: {}".format(cpViolation))
 
 			yield (cpLabelledVector, cpDistance, sparselyLabel(pointToSeparate))
