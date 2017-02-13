@@ -47,7 +47,7 @@ def makeLiftProjectLp(x, A, b, pi, pi0, d):
 ([0] * (len(leftSlackVariables) + len(rightSlackVariables) + len(leftCoefficientVariables) + len(rightCoefficientVariables))),
 			lb = 
 # cut variables are free
-[-cplex.infinity] * len(variables) +
+[d] * len(variables) +
 # slack variables are >= 0
 [d] * (len(leftSlackVariables) + len(rightSlackVariables)) +
 # coefficient variables are >= 0 
