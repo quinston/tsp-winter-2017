@@ -105,7 +105,9 @@ if __name__ == '__main__':
 	pi = [1 if variable in ("z158,98", "z159,100", "z180,128") else 0 for variable in variableNames]
 	# out degree of faces 241, 242, 243, 244 should be <= 1 or >= 2
 	pi = [1 if variable in ("z377,242", "z354,215", "z355,217", "z381,247", "z398,253", "z397,253") else 0 for variable in variableNames]
-	pi0 = 1
+	# out of degree of faces 31,30,1,2,3,4,5,6,7,36,37,38,39,40,41,42,13,14,15,44 should be <=4 or >= 5
+	pi = [1 if variable in ("z1,253", "z2,253", "z3,253", "z22,8", "z48,9", "z49,11", "z27,12", "z7,253", "z30,16", "z74,45", "z73,43", "z72,43", "z93,70", "z92,68", "91,66", "z95,35", "z46,34", "z45,32", "z61,32", "z88,60", "z59,29", "z15,253") else 0 for variable in variableNames]
+	pi0 = 4
 	d = 0
 
 	try:
