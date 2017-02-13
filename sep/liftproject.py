@@ -101,7 +101,11 @@ if __name__ == '__main__':
 	x = [sparseX[variable] if variable in sparseX else 0 for variable in variableNames]
 	# out degree of face 31 should be 0 or geq 1
 	pi = [1 if variable in ("z60,30", "z61,32", "z88,60") else 0 for variable in variableNames]
-	pi0 = 0
+	# out degree of face 99 should be 0 or geq 1
+	pi = [1 if variable in ("z158,98", "z159,100", "z180,128") else 0 for variable in variableNames]
+	# out degree of faces 241, 242, 243, 244 should be <= 1 or >= 2
+	pi = [1 if variable in ("z377,242", "z354,215", "z355,217", "z381,247", "z398,253", "z397,253") else 0 for variable in variableNames]
+	pi0 = 1
 	d = 0
 
 	try:
