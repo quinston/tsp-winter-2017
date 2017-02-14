@@ -26,6 +26,8 @@ u,v in R^m
 u_0,v_0 > d
 s,t in (x in R: x > d)^n
 
+
+Note the original poltyop must be Ax=b, x>=0
 """
 def makeLiftProjectLp(x, A, b, pi, pi0, d):
 	variables = ["alpha0"] + ["alpha{}".format(i) for i in range(1, len(x)+1)]
@@ -92,8 +94,9 @@ if __name__ == '__main__':
 	vinf = 13
 	V, E, Vstar, Estar = triangularGridGraph.triangularGridGraph(10, 15)
 	Ab = inequalities.makeExtendedLpConstraintMatrix(V, E, Vstar, Estar, vinf)
-	A = [row[0] for row in Ab]
-	b = [row[1] for row in Ab]
+	# There are pairs of inequalities to represent equations, just take the first one
+	A = [row[0] for row in Ab[::2]]
+	b = [row[1] for row in Ab[::2]]
 	variableNames = inequalities.enumerateExtendedLpVariables(V, E, Vstar, Estar, vinf)
 
 	# The first E-delta(vinf) rows are edges, the first V* minus incident to vinf rows are faces, then the rest are vertices
