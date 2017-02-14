@@ -109,12 +109,14 @@ if __name__ == '__main__':
 
 		# Many rows have same label because they represent equations
 		# So have to yield same label twice
+		# No longer need this since we took out doubled equations
 		def stutter(i):
 			for x in i:
 				yield x
 				yield x
 
-		return [(a,b) for a,b in zip(itertools.chain(stutter(edgeLabels), stutter(faceLabels), stutter(vertexLabels)), v) if b != 0]
+
+		return [(a,b) for a,b in zip(itertools.chain(edgeLabels, faceLabels, vertexLabels), v) if b != 0]
 
 	def sparselyLabel(v):
 		return [(a,b) for a,b in zip(variableNames, v) if b != 0]
