@@ -102,7 +102,16 @@ if __name__ == '__main__':
 		edgeLabels = ("e{}".format(i) for i,e in enumerate(E, 1) if vinf not in e)
 		faceLabels = ("f{}".format(i) for i,f in enumerate(Vstar, 1) if vinf not in f)
 		vertexLabels = ("v{}".format(i) for i,v in enumerate(V, 1))
-		return [(a,b) for a,b in zip(itertools.chain(edgeLabels, faceLabels, vertexLabels), v) if b != 0]
+		# Note that the nonnegativity inequalities are not included
+
+		# Many rows have same label because they represent equations
+		# So have to yield same label twice
+		def stutter(i):
+			for x in i:
+				yield x
+				yield x
+
+		return [(a,b) for a,b in zip(itertools.chain(stutter(edgeLabels), stutter(faceLabels), stutter(vertexLabels)), v) if b != 0]
 
 	def sparselyLabel(v):
 		return [(a,b) for a,b in zip(variableNames, v) if b != 0]
