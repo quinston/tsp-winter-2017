@@ -146,18 +146,22 @@ if __name__ == '__main__':
 
 		# The cutting plane for the left side
 		leftCoefficients = liftProjectProb.solution.get_values(["u{}".format(i) for i in range(1, len(A)+1)])
-		leftCp = multiplyWithAtranspose(leftCoefficients)
+		u0 = liftProjectProb.solution.get_values("u0")
+		leftCp = multiplyWithAtranspose(leftCoefficients) + numpy.matrix(pi) * (-u0)
 		logging.info("Left cutting plane: {}".format(sparselyLabel(leftCp.tolist()[0])))
-		logging.info("Left distance: {}".format(numpy.matrix(b) * numpy.matrix(leftCoefficients).transpose()))
+		logging.info("Left distance: {}".format(numpy.matrix(b) * numpy.matrix(leftCoefficients).transpose() + pi0 * (-u0)))
 		logging.info("Left decomposition: {}".format(sparseCoefficientLabel(leftCoefficients)))
+		logging.info("...u0: {}".format(u0))
 		logging.info("Left perturbation: {}".format(sparselyLabel(liftProjectProb.solution.get_values(["s{}".format(i) for i in range(1, len(x)+1)]))))
 
 		# For the right side
 		rightCoefficients = liftProjectProb.solution.get_values(["v{}".format(i) for i in range(1, len(A)+1)])
-		rightCp = multiplyWithAtranspose(rightCoefficients)
+		v0 = liftProjectProb.solution.get_values("v0")
+		rightCp = multiplyWithAtranspose(rightCoefficients) + numpy.matrix(pi) * (v0)
 		logging.info("Right cutting plane: {}".format(sparselyLabel(rightCp.tolist()[0])))
-		logging.info("Right distance: {}".format(numpy.matrix(b) * numpy.matrix(rightCoefficients).transpose()))
+		logging.info("Right distance: {}".format(numpy.matrix(b) * numpy.matrix(rightCoefficients).transpose() + (pi0 + 1) * (-v0)))
 		logging.info("Right decomposition: {}".format(sparseCoefficientLabel(rightCoefficients)))
+		logging.info("...v0: {}".format(v0))
 		logging.info("Right perturbation: {}".format(sparselyLabel(liftProjectProb.solution.get_values(["t{}".format(i) for i in range(1, len(x)+1)]))))
 
 	except CplexError as e:
