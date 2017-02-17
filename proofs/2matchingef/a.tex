@@ -1,0 +1,131 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{commath}
+\newtheorem{theorem}{Theorem}
+\usepackage{hyperref}
+\begin{document}
+This compiles results from:
+\begin{itemize}
+\item Conforti et al.'s survey on extended formulations: \url{http://personal.lse.ac.uk/Zambelli/papers/surveyextended\%20formulations-Feb2010.pdf}
+\item Bondy and Murty's \emph{Graph Theory} p.431: \url{http://books2.scholarsportal.info/viewdoc.html?id=389980}
+\item Caen on sum of squares of degrees of a graph: \url{http://www.sciencedirect.com/science/article/pii/S0012365X97002136}
+\end{itemize}
+
+Let $G=(V,E)$ plane.
+
+\begin{theorem}
+A 1-factor is exactly a $V$-join.
+\end{theorem}
+\begin{theorem}
+Let $T\subseteq V$ with $\abs{T}$ even. The symmetric difference of two $T$-joins is an $\varnothing$-join.
+\end{theorem}
+\begin{theorem}
+Fix two $T$-joins $A\neq B$. There exists an $\varnothing$-join $C$ such that $A = B\bigtriangleup C$.
+\end{theorem}
+\begin{proof}
+Namely, $A\bigtriangleup B$.
+\end{proof}
+
+\begin{theorem}
+Fix a $V$-join (1-factor) $A$. The $V$-join polytope (for any $G$ not necessarily planar) is
+
+$$P^{\text{$V$-join}}(G) = \cbr{y\in \mathbf{R}^E: \text{there exists $x\in P^{\text{$\varnothing$-join}}(G)$, $y_e = x_e$ for all $e\not\in A$ and $y_e=1-x_e$ for all $e\in A$}}$$
+\end{theorem}
+
+\begin{theorem}
+The $\varnothing$-join polytope (for any $G$ not necessarily planar) is
+
+$$P^{\text{$\varnothing$-join}}(G) = \cbr{x\in\mathbf{R}^E: \begin{array}{ll}
+x(F)-x(\delta(S)-F) \leq \abs{F}-1 & S\subsetneqq V, \text{$S$ a minimal cut}, F\subseteq \delta(S), \abs{F}\text{ odd} \\
+0\leq x\leq 1 &
+\end{array}}$$
+\end{theorem}
+
+\begin{theorem}
+A 2-factor is a $\varnothing$-join with every vertex having degree 2.
+\end{theorem}
+
+\begin{theorem}
+Let $G$ be planar and $G^*$ a planar dual. $S\subseteq E$ is a $\varnothing$-join (equivalently, an Eulerian subgraph; a disjoint union of cycles; a member of the cycle space $\mathcal{C}(G)$) if and only if $S^*$ is a cut of $G^*$. Additionally,
+$S$ is a simple cycle if and only if $S^*$ is an (inclusion-) minimal cut.
+\end{theorem}
+
+\begin{theorem}
+Let $G$ be a graph not necessarily planar.
+Let $P^{cut}(G)$ denote the convex hull of cuts of $G$. Then $P^{cut}(G)$ is a subset of:
+
+$$ R(G) = \cbr{x\in \mathbf{R}^E: \begin{array}{ll}
+x(F)-x(C-F)\leq \abs{F}-1 & C\in \mathcal{C}(G), F\subseteq C, \abs{F}\text{ odd} \\
+0\leq x\leq 1
+\end{array}}$$
+
+\end{theorem}
+
+\begin{theorem}
+For planar graphs (and some others), $P^{cut}(G) = R(G)$.
+\end{theorem}
+
+\begin{theorem}
+Let $G=(V,E)$ planar.
+For $x\in \cbr{0,1}^E$, let $x^*\in\cbr{0,1}^{E^*}$ be the characteristic
+vector of the dual edges. Then
+$$P^{\text{$\varnothing$-join}}(G) = \cbr{x\in\mathbf{R}^E: x^*\in P^{cut}(G^*)} = \cbr{x\in\mathbf{R}^E: x^*\in R(G^*)}$$
+\end{theorem}
+
+\begin{proof}
+If $x^* \in P^{cut}(G^*)$, then $x^*(F)-x^*(C-F)\leq \abs{F}-1$ for every $C\in \mathcal{C}(G^*)$ and odd size $F\subseteq C$. In particular this holds for every circuit $C\subseteq E^*$. By circuit-minimal cut duality, the corresponding inequality holds for the minimal cut $C^*\subseteq E$ in the primal graph.
+\end{proof}
+
+
+\begin{theorem}
+Let $G=(V,E)$ be planar. Let $H=(V, E')$ with $E\subseteq E'$. Then $R(G)$ is the projection of $R(H)$ onto $\mathbf{R}^E$.
+\end{theorem}
+
+\begin{theorem}
+Let $C$ be a cycle with a chord. Then the cut inequality for $C$ is implied by the inequalities for the cycles on either side of the chord. 
+\end{theorem}
+
+\begin{theorem}
+Let $H$ be a complete triangulation (i.e. every facial cycle is a triangle) of $G$. Then  $R(H)$ is a compact formulation for $R(G)$.
+\end{theorem}
+\begin{proof}
+Triangles are the only cycles without chords. So
+the only cut inequalities needed are the ones for triangles. 
+There are only $O(V)$ triangles in a planar triangulated graph since the number of faces is $O(V)$. 
+\end{proof}
+
+
+\begin{theorem}
+Fix a $V$-join $A$.
+Let $E'\supseteq E^*$ so that $(V^*, E')$ is triangulated.
+The following (with the projection map onto $y$) is a compact formulation for $P^{\text{V-join}}(G)$
+
+$$\cbr{(y,x,z)\in\mathbf{R}^E\times\mathbf{R}^E\times\mathbf{R}^{E'-E}:
+\begin{array}{lr}
+y_e = x_e & e\not\in A \\
+y_e = 1-x_e & e\in A \\
+(x,z)(F) - (x,z)(C-F) \leq \abs{F}-1 & \text{triangle $C \subseteq E'$} \\
+0 \leq y,x,z \leq 1
+\end{array}
+}$$
+\end{theorem}
+
+\begin{theorem}
+There exists a compact extended formulation of the $k$-factor polytope for $G$,
+$k\in\mathbf{Z}^+$.
+\end{theorem}
+\begin{proof}
+By Tutte's transformation (see Bondy and Murty for details) 
+it suffices to  compute a 1-factor on a graph with:
+
+$$\sum_{v} (-1 + (\deg(v)-k) + \deg(v)) = 2k\abs{E}-3\abs{V}$$
+
+extra vertices, and
+
+$$\sum_{v} (\deg v - k)(\deg v) = \sum_{v}(\deg v)^2 - k\abs{E} = O(V^2)$$
+
+extra edges, using Caen's result and $E = O(V)$.
+\end{proof}
+\end{document}
