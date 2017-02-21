@@ -274,3 +274,23 @@ def makeSparseFaceColourUnidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar
 def getFaceColourVariableNames(Vstar, Estar):
 	import itertools
 	return ["b{}".format(i) for i in range(1, len(Vstar)+1)] + list(itertools.chain(*[["c{},{}".format(e,u), "c{},{}".format(e,v)] for e,(u,v) in enumerate(Estar, 1)]))
+
+def makeSparseFaceColourMatrix(V, E, Vstar, Estar, vinf):
+	import scipy.sparse
+	noEsepVariables = len(enumerateExtendedLpVariables(V,E,Vstar,Estar,vinf))
+	noVariables = noEsepVariables + len(getFaceColourVariableNames(Vstar, Estar))
+
+	# Set last face to black (-b <= -1 i.e. b >= 1)
+	seedFaceConstraint = scipy.sparse.dok_matrix((1, noVariables+1))
+	seedFaceConstraint[0, noEsepVariables + (len(Vstar) - 1)] = -1
+	seedFaceConstraint[0, noVariables] = -1
+	# Make sure not all faces are black
+	antiseedFaceConstraint = scipy.sparse.dok_matrix((1, noVariables+1))
+	antiseedFaceConstraint[0, noEsepVariables:(noEsepVariables+len(Vstar))] = 1
+	antiseedFaceConstraint[0, noVariables] = len(Vstar) - 1
+
+
+	return scipy.sparse.vstack(
+(makeSparseFaceColourNonnegativityMatrix(V,E,Vstar,Estar,vinf), makeSparseFaceColourBidirectionallyBoundedGradientMatrix(V,E,Vstar,Estar,vinf), makeSparseFaceColourUnidirectionallyBoundedGradientMatrix(V,E,Vstar,Estar,vinf), seedFaceConstraint, antiseedFaceConstraint
+    )
+			)

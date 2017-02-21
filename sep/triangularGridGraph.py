@@ -41,7 +41,8 @@ if __name__ == '__main__':
 	weights = dict((e, random.randint(1, 10)) for i,e in enumerate(E, 1))
 
 	import findTspCps
-	for _,_,x in findTspCps.findCps(V,E,Vstar,Estar,vinf,weights):
+	for _,_,x in findTspCps.findCps(V,E,Vstar,Estar,vinf,weights,faceColours=True):
+		break
 		import concorde
 		# Turn this [("x1", 0.3), ("x2", 0.4) ...] into {1: 0.3, 2: 0.4}
 		concorde.produceEdgFormat(V, E, dict((int(a[1:]), b) for a,b in x if a[0] == "x"), allowNonintegerWeights=True)

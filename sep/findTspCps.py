@@ -11,15 +11,19 @@ logger.addHandler(ch)
 
 def findCps(vertices, edges, dualVertices, dualEdges, vinf, weights=None, 
 forceXto0=False, forceXpositive=False, forceZto0=False, forceZpositive=False,
-sparseCoefficients=True, unboundedCoefficients=False, halfInteger=False):
+sparseCoefficients=True, unboundedCoefficients=False, halfInteger=False,
+faceColours=False):
 	import sys
 	import cplex
 	from cplex.exceptions import CplexError
 	import cgsep
 	import inequalities
 	import math
+	import scipy.sparse
 
-	variableNames = inequalities.enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf)
+	variableNames = inequalities.enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf) 
+	if faceColours:
+		variableNames += inequalities.getFaceColourVariableNames(dualVertices, dualEdges)
 
 	# Create a list of pairs omitting zero entries 
 	def sparselyLabel(v):
@@ -40,23 +44,33 @@ sparseCoefficients=True, unboundedCoefficients=False, halfInteger=False):
 		logging.debug("Number of variables: %".format(len(variableNames)))
 		
 		polytopeProb.variables.add(names = variableNames,
-				obj = objectiveFunction,
-				lb = [0] * len(variableNames))
-		Ab = inequalities.makeExtendedLpConstraintMatrix(vertices, edges, dualVertices, dualEdges, vinf)
-		A = [row[0] for row in Ab]
-		
-		"""
-		Turns a vector (row of constraint matrix) into a sparse pair
-		"""
-		def rowToSparsePair(row):
-			return cplex.SparsePair(ind = [name for i,name in enumerate(variableNames) if row[i] != 0], val = [x for x in row if x != 0])
+				obj = objectiveFunction)
 
-		Alol = [rowToSparsePair(row) for row in A]
-		b = [row[1] for row in Ab]
+		esepAb = inequalities.makeSparseExtendedLpMatrix(vertices, edges, dualVertices, dualEdges, vinf, includeBounds=True)
+		if faceColours:
+			faceColourAb = inequalities.makeSparseFaceColourMatrix(vertices,edges,dualVertices,dualEdges,vinf)
+			# We have to move the RHS of esep over  to the right since the matrix is now wider with the extra variables
+			oldEsepShape = esepAb.shape
+			esepAb.resize((esepAb.shape[0], faceColourAb.shape[1]))
+			esepAb[:, faceColourAb.shape[1]-1] = esepAb[:, oldEsepShape[1]-1]
+			esepAb[:, oldEsepShape[1]-1] = 0
 
-		polytopeProb.linear_constraints.add(lin_expr = Alol, rhs = b, senses = 'L' * len(b)) 
+			Ab = scipy.sparse.vstack((esepAb, faceColourAb)).tocsr()
 
-		#polytopeProb.set_results_stream(None)
+		else:
+			Ab = esepAb
+
+		A = Ab[:, :-1].todense().tolist()
+		b = [x[0] for x in Ab[:, -1].todense().tolist()]
+
+		def matrixRowToSparsePair(row):
+			return cplex.SparsePair(ind = [name for i,name in enumerate(variableNames) if row[0, i] != 0],
+	val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
+
+
+		for numRow in range(Ab.shape[0]):
+			polytopeProb.linear_constraints.add(lin_expr = [matrixRowToSparsePair(Ab[numRow, :-1])], rhs=[Ab[numRow, -1]], senses='L')
+
 		polytopeProb.write('polytope.lp')
 
 		# For convenience, add binary section for the variables
