@@ -469,7 +469,12 @@ z5,3 >= 0""")
 
 		self.assertEqual(answer.todense().tolist(), inequalities.makeSparseFaceColourUnidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar, vinf).todense().tolist())
 
-
+	def test_getFaceColourVariableNames(self):
+		Vstar = [(1,2,3), (2,3,4), (1,2,4,3)]
+		Estar = [(1,3), (1,3), (1,2), (2,3), (2,3)]
+		self.assertEqual(inequalities.getFaceColourVariableNames(Vstar, Estar),
+				["b1","b2","b3","c1,1","c1,3","c2,1","c2,3","c3,1","c3,2","c4,2","c4,3","c5,2","c5,3"])
+		
 
 if __name__ == '__main__':
 	unittest.main()

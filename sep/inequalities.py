@@ -256,3 +256,6 @@ def makeSparseFaceColourUnidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar
 
 	return ret
 
+def getFaceColourVariableNames(Vstar, Estar):
+	import itertools
+	return ["b{}".format(i) for i in range(1, len(Vstar)+1)] + list(itertools.chain(*[["c{},{}".format(e,u), "c{},{}".format(e,v)] for e,(u,v) in enumerate(Estar, 1)]))
