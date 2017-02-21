@@ -441,7 +441,7 @@ z5,3 >= 0""")
 		self.assertEqual(answer.todense().tolist(), inequalities.makeSparseFaceColourBidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar, vinf).todense().tolist())
 
 
-	def test_makeSparseFaceColourMatrix(self):
+	def test_makeSparseFaceColourUnidirectionallyBoundedGradientMatrix(self):
 		import scipy.sparse
 
 		self.maxDiff = None
@@ -475,6 +475,29 @@ z5,3 >= 0""")
 		self.assertEqual(inequalities.getFaceColourVariableNames(Vstar, Estar),
 				["b1","b2","b3","c1,1","c1,3","c2,1","c2,3","c3,1","c3,2","c4,2","c4,3","c5,2","c5,3"])
 		
+	
+	def test_makeSparseFaceColourBoundedColourMatrix(self):
+		import scipy.sparse
+
+		self.maxDiff = None
+
+		# Just a theta graph of two triangles
+		V = range(1,4+1)
+		E = [(1,2), (1,3), (2,3), (2,4), (3,4)]
+		Vstar = [(1,2,3), (2,3,4), (1,2,4,3)]
+		Estar = [(1,3), (1,3), (1,2), (2,3), (2,3)]
+		vinf = 1
+
+		answer = scipy.sparse.dok_matrix([
+			[0,0,0,0,0, 0,0,0,0,0,0, 1,0,0, 0,0,0,0,0,0,0,0,0,0, 1], # bd1 <= 1
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,1,0, 0,0,0,0,0,0,0,0,0,0, 1], # bd2 <= 1
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,1, 0,0,0,0,0,0,0,0,0,0, 1], # bd3 <= 1
+			])
+
+		self.assertEqual(answer.todense().tolist(), inequalities.makeSparseFaceColourBoundedColourMatrix(V, E, Vstar, Estar, vinf).todense().tolist())
+
+
+
 
 if __name__ == '__main__':
 	unittest.main()

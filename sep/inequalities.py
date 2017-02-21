@@ -222,6 +222,21 @@ def makeSparseFaceColourNonnegativityMatrix(V, E, Vstar, Estar, vinf):
 
 	return ret
 
+def makeSparseFaceColourBoundedColourMatrix(V, E, Vstar, Estar, vinf):
+	import scipy.sparse
+	degreeVinf = sum(1 if vinf in e else 0 for e in E)
+	noEsepVariables = 3*len(E) - 2*degreeVinf
+	noColourVariables = len(Vstar) + 2*len(Estar)
+	noVariables = noEsepVariables + noColourVariables
+	noConstraints =  len(Vstar)
+	ret = scipy.sparse.dok_matrix((noConstraints, noVariables + 1))
+
+	for i in range(len(Vstar)):
+		ret[i, noEsepVariables + i] = 1
+		ret[i, -1] = 1
+
+	return ret
+
 def makeSparseFaceColourBidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar, vinf):
 	import scipy.sparse
 	degreeVinf = sum(1 if vinf in e else 0 for e in E)
