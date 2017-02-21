@@ -388,5 +388,88 @@ z5,3 >= 0""")
 		self.assertEqual(attempt.shape, answer.shape)
 		self.assertEqual((attempt - answer).nnz, 0)
 
+	def test_makeSparseFaceColourNonnegativityMatrix(self):
+		import scipy.sparse
+
+		self.maxDiff = None
+
+		# Just a theta graph of two triangles
+		V = range(1,4+1)
+		E = [(1,2), (1,3), (2,3), (2,4), (3,4)]
+		Vstar = [(1,2,3), (2,3,4), (1,2,4,3)]
+		Estar = [(1,3), (1,3), (1,2), (2,3), (2,3)]
+
+		vinf = 1
+
+		answer = scipy.sparse.dok_matrix([
+			[0,0,0,0,0, 0,0,0,0,0,0, -1,0,0, 0,0,0,0,0,0,0,0,0,0, 0], # d1 >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,-1,0, 0,0,0,0,0,0,0,0,0,0, 0], # d2 >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,-1, 0,0,0,0,0,0,0,0,0,0, 0], # d3 >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, -1,0,0,0,0,0,0,0,0,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,-1,0,0,0,0,0,0,0,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,-1,0,0,0,0,0,0,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,-1,0,0,0,0,0,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,-1,0,0,0,0,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,0,-1,0,0,0,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,0,0,-1,0,0,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,0,0,0,-1,0,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,0,0,0,0,-1,0, 0], # c >= 0
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,0,0,0,0,0,-1, 0] # c >= 0
+		])
+		attempt = inequalities.makeSparseFaceColourNonnegativityMatrix(V, E, Vstar, Estar, vinf)
+
+		self.assertEqual(answer.todense().tolist(), attempt.todense().tolist())
+
+	def test_makeSparseFaceColourBidirectionallyBoundedGradientMatrix(self):
+		import scipy.sparse
+		self.maxDiff = None
+		V = range(1,4+1)
+		E = [(1,2), (1,3), (2,3), (2,4), (3,4)]
+		Vstar = [(1,2,3), (2,3,4), (1,2,4,3)]
+		Estar = [(1,3), (1,3), (1,2), (2,3), (2,3)]
+
+		vinf = 1
+
+		answer = scipy.sparse.dok_matrix([
+			[-1,0,0,0,0, 0,0,0,0,0,0, 0,0,0, 1,1,0,0,0,0,0,0,0,0, 0], # c_e1,d1 + c_e1,d3 <= x_e1
+			[0,-1,0,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,1,1,0,0,0,0,0,0, 0], # c_e2,d1 + c_e2,d3 <= x_e2
+			[0,0,-1,0,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,1,1,0,0,0,0, 0], # c_e3,d1 + c_e3,d2 <= x_e3
+			[0,0,0,-1,0, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,0,0,1,1,0,0, 0], # c_e4,d2 + c_e4,d3 <= x_e4
+			[0,0,0,0,-1, 0,0,0,0,0,0, 0,0,0, 0,0,0,0,0,0,0,0,1,1, 0] # c_e5,d2 + c_e5,d3 <= x_e5
+			])
+
+		self.assertEqual(answer.todense().tolist(), inequalities.makeSparseFaceColourBidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar, vinf).todense().tolist())
+
+
+	def test_makeSparseFaceColourMatrix(self):
+		import scipy.sparse
+
+		self.maxDiff = None
+
+		# Just a theta graph of two triangles
+		V = range(1,4+1)
+		E = [(1,2), (1,3), (2,3), (2,4), (3,4)]
+		Vstar = [(1,2,3), (2,3,4), (1,2,4,3)]
+		Estar = [(1,3), (1,3), (1,2), (2,3), (2,3)]
+
+		vinf = 1
+
+		answer = scipy.sparse.dok_matrix([
+			[0,0,0,0,0, 0,0,0,0,0,0, 1,0,-1, -1,0,0,0,0,0,0,0,0,0, 0], # bd1 - bd3 <= c_e1,d1
+			[0,0,0,0,0, 0,0,0,0,0,0, -1,0,1, 0,-1,0,0,0,0,0,0,0,0, 0], # bd3 - bd1 <= c_e1,d3
+			[0,0,0,0,0, 0,0,0,0,0,0, 1,0,-1, 0,0,-1,0,0,0,0,0,0,0, 0], # bd1 - bd3 <= c_e2,d1
+			[0,0,0,0,0, 0,0,0,0,0,0, -1,0,1, 0,0,0,-1,0,0,0,0,0,0, 0], # bd3 - bd1 <= c_e2,d3
+			[0,0,0,0,0, 0,0,0,0,0,0, 1,-1,0, 0,0,0,0,-1,0,0,0,0,0, 0], # bd1 - bd2 <= c_e3,d1
+			[0,0,0,0,0, 0,0,0,0,0,0, -1,1,0, 0,0,0,0,0,-1,0,0,0,0, 0], # bd2 - bd1 <= c_e3,d2
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,1,-1, 0,0,0,0,0,0,-1,0,0,0, 0], # bd2 - bd3 <= c_e4,d2
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,-1,1, 0,0,0,0,0,0,0,-1,0,0, 0], # bd3 - bd2 <= c_e4,d3
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,1,-1, 0,0,0,0,0,0,0,0,-1,0, 0], # bd2 - bd3 <= c_e5,d2
+			[0,0,0,0,0, 0,0,0,0,0,0, 0,-1,1, 0,0,0,0,0,0,0,0,0,-1, 0], # bd3 - bd2 <= c_e5,d3
+			])
+
+		self.assertEqual(answer.todense().tolist(), inequalities.makeSparseFaceColourUnidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar, vinf).todense().tolist())
+
+
+
 if __name__ == '__main__':
 	unittest.main()

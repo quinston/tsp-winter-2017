@@ -202,3 +202,57 @@ def makeSparseExtendedLpMatrix(vertices, edges, dualVertices, dualEdges, vinf, i
 	assert(nextConstraintRow == noConstraints)
 
 	return ret
+
+"""
+Introduce 0-1 variables
+b_f for each face f (=1  if f is black)
+c_e,u and c_e,v for each dual edge e={u,v} where b_u - b_v <= c_e,u
+"""
+def makeSparseFaceColourNonnegativityMatrix(V, E, Vstar, Estar, vinf):
+	import scipy.sparse
+	degreeVinf = sum(1 if vinf in e else 0 for e in E)
+	noEsepVariables = 3*len(E) - 2*degreeVinf
+	noColourVariables = len(Vstar) + 2*len(Estar)
+	noVariables = noEsepVariables + noColourVariables
+	noConstraints = noColourVariables 
+	ret = scipy.sparse.dok_matrix((noConstraints, noVariables + 1))
+
+	for i in range(noColourVariables):
+		ret[i, noEsepVariables + i] = -1
+
+	return ret
+
+def makeSparseFaceColourBidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar, vinf):
+	import scipy.sparse
+	degreeVinf = sum(1 if vinf in e else 0 for e in E)
+	noEsepVariables = 3*len(E) - 2*degreeVinf
+	noColourVariables = len(Vstar) + 2*len(Estar)
+	noVariables = noEsepVariables + noColourVariables
+	noConstraints = len(E)
+	ret = scipy.sparse.dok_matrix((noConstraints, noVariables + 1))
+
+	for i in range(len(E)):
+		ret[i, i] = -1
+		ret[i, (noEsepVariables+len(Vstar)+2*i):(noEsepVariables+len(Vstar)+2*i+2)] = [1,1]
+
+	return ret
+
+def makeSparseFaceColourUnidirectionallyBoundedGradientMatrix(V, E, Vstar, Estar, vinf):
+	import scipy.sparse
+	degreeVinf = sum(1 if vinf in e else 0 for e in E)
+	noEsepVariables = 3*len(E) - 2*degreeVinf
+	noColourVariables = len(Vstar) + 2*len(Estar)
+	noVariables = noEsepVariables + noColourVariables
+	noConstraints = len(Estar) * 2
+	ret = scipy.sparse.dok_matrix((noConstraints, noVariables + 1))
+
+	for i,e in enumerate(Estar):
+		ret[2*i, noEsepVariables + e[0] - 1] = 1
+		ret[2*i, noEsepVariables + e[1] - 1] = -1
+		ret[2*i+1, :] = -ret[2*i, :]
+
+	for i in range(2*len(Estar)):
+		ret[i, noEsepVariables + len(Vstar) + i] = -1
+
+	return ret
+
