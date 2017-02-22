@@ -1,7 +1,7 @@
 import logging
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(ch)
@@ -21,9 +21,11 @@ faceColours=False):
 	import math
 	import scipy.sparse
 
-	variableNames = inequalities.enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf) 
+	esepVariableNames = inequalities.enumerateExtendedLpVariables(vertices, edges, dualVertices, dualEdges, vinf) 
 	if faceColours:
-		variableNames += inequalities.getFaceColourVariableNames(dualVertices, dualEdges)
+		variableNames = esepVariableNames + inequalities.getFaceColourVariableNames(dualVertices, dualEdges)
+	else:
+		variableNames = esepVariableNames
 
 	# Create a list of pairs omitting zero entries 
 	def sparselyLabel(v):
@@ -41,7 +43,7 @@ faceColours=False):
 	try:
 		polytopeProb.objective.set_sense(polytopeProb.objective.sense.minimize)
 
-		logging.debug("Number of variables: %".format(len(variableNames)))
+		logging.debug("Number of variables: {}".format(len(variableNames)))
 		
 		polytopeProb.variables.add(names = variableNames,
 				obj = objectiveFunction)
@@ -60,8 +62,12 @@ faceColours=False):
 		else:
 			Ab = esepAb
 
+		logging.debug("Made A|b")
+
 		A = Ab[:, :-1].todense().tolist()
 		b = [x[0] for x in Ab[:, -1].todense().tolist()]
+
+		logging.debug("Made sparse A|b")
 
 		def matrixRowToSparsePair(row):
 			return cplex.SparsePair(ind = [name for i,name in enumerate(variableNames) if row[0, i] != 0],
@@ -93,8 +99,17 @@ faceColours=False):
 		def cpVectorFromProb(prob, pointToSeparate, A):
 			u = [prob.solution.get_values('u{}'.format(i)) for i in range(1, len(A)+1)]
 			uA = [(prob.solution.get_values('a{}'.format(i)) if i in getPositiveSupport(pointToSeparate) else sum(u[j] * row[i-1] for j,row in enumerate(A))) for i in range(1, len(variableNames) + 1)]
+
+			# drop denormalized values
+			epsilon = 1e-5
+			for i in range(len(uA)):
+				if abs(uA[i]) < epsilon:
+					uA[i] = 0
+
+
 			floorUA = [math.floor(x) for x in uA]
 			logging.debug("Variables that need flooring, and amount to floor: {}".format(sparselyLabel([a - b for a,b in zip(uA, floorUA)])))
+
 			return floorUA
 
 
@@ -120,9 +135,9 @@ faceColours=False):
 			if forceZpositive:
 				cpProb.linear_constraints.add(
 						lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
-							val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(variableNames)+1)],
-						rhs=[0] * (len(variableNames) - len(edges)), 
-						senses='L' * (len(variableNames) - len(edges)))
+							val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(esepVariableNames)+1)],
+						rhs=[0] * (len(esepVariableNames) - len(edges)), 
+						senses='L' * (len(esepVariableNames) - len(edges)))
 
 			# force -x_e <= 0 (x_e >= 0)
 			if forceXpositive:
@@ -134,11 +149,13 @@ faceColours=False):
 
 			# force  z_e,v = 0
 			if forceZto0:
+				logging.debug("len(edges) {}".format(len(edges)))
+				logging.debug("len(esepVariableNames) {}".format(len(esepVariableNames)))
 				cpProb.linear_constraints.add(
 						lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
-							val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(variableNames)+1)],
-						rhs=[0] * (len(variableNames) - len(edges)), 
-						senses='E' * (len(variableNames) - len(edges)))
+							val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(esepVariableNames)+1)],
+						rhs=[0] * (len(esepVariableNames) - len(edges)), 
+						senses='E' * (len(esepVariableNames) - len(edges)))
 
 			# only accept rank 1 chvatal cuts
 			cuttingPlaneIndices = range(originalNoEquations + 1, originalNoEquations + noCuttingPlanes + 1)
