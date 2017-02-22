@@ -164,7 +164,7 @@ faceColours=False):
 						senses='E')
 
 			# don't care about sparse combinations
-			if sparseCoefficients:
+			if not sparseCoefficients:
 				cpProb.objective.set_linear([("u{}".format(i), 0) for i in range(1, len(A)+1)])
 
 			# allow arbitrary coefficients
