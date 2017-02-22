@@ -6,7 +6,7 @@ class TriangularGridGraph(Canvas):
 		super().__init__(master)
 		self.GRID_HEIGHT = height
 		self.GRID_WIDTH = width
-		self.CELL_PIXEL_WIDTH = 100
+		self.CELL_PIXEL_WIDTH = 120
 		self.ARROW_PIXEL_LENGTH = self.CELL_PIXEL_WIDTH // 3
 		self.TOP_LEFT_CORNER = (30, 30)
 		self.VOID_COLOUR = "#f0f0f0"
@@ -16,6 +16,11 @@ class TriangularGridGraph(Canvas):
 		for i in range(1, noEdges+1):
 			self.drawEdge(i, data)
 			self.drawArcs(i, data)
+
+		# +1 for infinite face
+		noFaces = 2*(width-1)*(height-1) + 1
+		for i in range(1, noFaces+1):
+			self.drawFace(i, data)
 
 		self.drawVinf(vinf)
 		
@@ -213,6 +218,24 @@ class TriangularGridGraph(Canvas):
 					self.create_text(self.TOP_LEFT_CORNER[0] + offset + (self.ARROW_PIXEL_LENGTH // 3) + self.CELL_PIXEL_WIDTH * horizontalPosition ,
 						self.TOP_LEFT_CORNER[1] + offset + self.CELL_PIXEL_WIDTH * verticalPosition - stagger,
  text="{:.3f}".format(data[edgeName]), fill='blue')
+	
+	def drawFace(self, f, data):
+		faceName = "b{}".format(f)
+
+		if faceName not in data:
+			value = 0
+		else:
+			value = data[faceName]
+
+		horizontalPosition = (f-1) % ((self.GRID_WIDTH - 1) * 2)
+		verticalPosition = (f-1) // ((self.GRID_WIDTH - 1) * 2)
+		
+		horizontalOffset = (((-1)**(f-1)) * (self.CELL_PIXEL_WIDTH // 8)) + self.CELL_PIXEL_WIDTH // 4
+		verticalOffset = ((-1)**(f-1)) * (self.CELL_PIXEL_WIDTH // 10) + (self.CELL_PIXEL_WIDTH * 24 // 50)
+		self.create_text(self.TOP_LEFT_CORNER[0] + horizontalOffset + (horizontalPosition * (self.CELL_PIXEL_WIDTH // 2)),
+				self.TOP_LEFT_CORNER[1] + verticalOffset + (verticalPosition * self.CELL_PIXEL_WIDTH),
+				text="{:.3f}".format(value),
+				fill='magenta')
 
 def displayTriangularGrid(height, width, vinf, data):
 	root = Tk()
