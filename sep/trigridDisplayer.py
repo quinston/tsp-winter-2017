@@ -117,7 +117,7 @@ class TriangularGridGraph(Canvas):
 				downFace = 2*((verticalPosition + 0) * (self.GRID_WIDTH - 1) + horizontalPosition) + 2
 
 			for face, direction, offset in ((upFace, "first", self.CELL_PIXEL_WIDTH * 2 // 9), (downFace, "last", self.CELL_PIXEL_WIDTH * 7 // 9)):
-				edgeName = "z{},{}".format(e, face)
+				edgeName = "c{},{}".format(e, face)
 				isVoid = edgeName not in data or data[edgeName] == 0
 
 				if not isVoid:
@@ -159,7 +159,7 @@ class TriangularGridGraph(Canvas):
 				rightFace = 2*((verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition) + 1
 
 			for face, direction, offset in ((leftFace, "first", self.CELL_PIXEL_WIDTH//3), (rightFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
-				edgeName = "z{},{}".format(e, face)
+				edgeName = "c{},{}".format(e, face)
 				isVoid = edgeName not in data or data[edgeName] == 0
 
 				if not isVoid:
@@ -192,7 +192,7 @@ class TriangularGridGraph(Canvas):
 			rightFace = 2*((verticalPosition) * (self.GRID_WIDTH - 1) + horizontalPosition ) + 2
 
 			for face, direction, offset in ((leftFace, "first", self.CELL_PIXEL_WIDTH//3), (rightFace, "last", 2 * self.CELL_PIXEL_WIDTH // 3)):
-				edgeName = "z{},{}".format(e, face)
+				edgeName = "c{},{}".format(e, face)
 				isVoid = edgeName not in data or data[edgeName] == 0
 
 				if not isVoid:
