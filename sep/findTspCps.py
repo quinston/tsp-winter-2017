@@ -1,7 +1,7 @@
 import logging
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(ch)
@@ -149,8 +149,6 @@ faceColours=False):
 
 			# force  z_e,v = 0
 			if forceZto0:
-				logging.debug("len(edges) {}".format(len(edges)))
-				logging.debug("len(esepVariableNames) {}".format(len(esepVariableNames)))
 				cpProb.linear_constraints.add(
 						lin_expr = [cplex.SparsePair(ind=["u{}".format(i) for i in range(1, len(A)+1)], 
 							val=[row[j-1] for row in A]) for j in range(len(edges)+1, len(esepVariableNames)+1)],
