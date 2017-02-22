@@ -67,11 +67,14 @@ faceColours=False):
 		A = Ab[:, :-1].todense().tolist()
 		b = [x[0] for x in Ab[:, -1].todense().tolist()]
 
-		logging.debug("Made sparse A|b")
+		logging.debug("Made dense A|b")
+
+		Ab = Ab.tocsr()
 
 		def matrixRowToSparsePair(row):
-			return cplex.SparsePair(ind = [name for i,name in enumerate(variableNames) if row[0, i] != 0],
-	val = [row[0, i] for i in range(row.shape[1]) if row[0,i] != 0])
+			nonzeroIndices = row.nonzero()[1].tolist()
+			nonzeroColumnNames = [variableNames[i] for i in nonzeroIndices]
+			return cplex.SparsePair(ind = nonzeroColumnNames, val = [row[0,i] for i in nonzeroIndices])
 
 
 		for numRow in range(Ab.shape[0]):
