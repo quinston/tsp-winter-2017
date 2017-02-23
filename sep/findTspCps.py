@@ -71,6 +71,9 @@ faceColours=False):
 
 		Ab = Ab.tocsr()
 
+		def rowToSparsePair(row):
+			return cplex.SparsePair(ind = [name for i,name in enumerate(variableNames) if row[i] != 0], val = [x for x in row if x != 0])
+
 		def matrixRowToSparsePair(row):
 			nonzeroIndices = row.nonzero()[1].tolist()
 			nonzeroColumnNames = [variableNames[i] for i in nonzeroIndices]
