@@ -64,8 +64,46 @@ faceColours=False):
 
 		logging.debug("Made A|b")
 
-		A = Ab[:, :-1].todense().tolist()
-		b = [x[0] for x in Ab[:, -1].todense().tolist()]
+		"""
+		We only need the inequalities that give us x(gamma(S)) <= S-1, for 
+		nonempty S subset of V, with G[S] and G[V-S] connected,
+		and vinf not in S
+
+		Recipe:
+
+		x(gamma(S)) + z(gamma(S)) <= gamma(S)
+					(this is given)
+
+		-z(delta^in(F'(S))) <= -F'(S)
+					(this is given)
+
+		Use this fact:
+
+		-z(gamma(S)) <= -z(delta^in(F'(S)) 
+					(where F'(S) is the set of faces 
+					of G[S] that are also faces of G)
+					(note this inequality is purely combinatorial: we are summing 
+					fewer things on the right hand side, so its sum must
+					be greater, so its negative sum must be less)
+
+		Use this fact:
+
+		F(S) - 1 <= F'(S)      
+					(this is since G[S] and G[V-S] are connected)
+
+		The sum is x(gamma(S)) <= gamma(S) - F(S) + 1
+
+		Apply Euler's formula and you are done.
+		"""
+		noEdgeEquations = sum(1 for e in edges if vinf not in e)
+		noFaceEquations = sum(1 for f in dualVertices if vinf not in f)
+		# As explained above, take the <= edge inequalities, 
+		# the >= face inequalities...
+		# and take the <= degree inequalities for good measure
+		appropriateSlice = list(range(0, 2*noEdgeEquations, 2)) + list(range(2*noEdgeEquations+1, 2*(noEdgeEquations + noFaceEquations + 1), 2)) + list(range(2*(noEdgeEquations + noFaceEquations), Ab.shape[0], 2))
+
+		A = Ab[appropriateSlice, :-1].todense().tolist()
+		b = [x[0] for x in Ab[appropriateSlice, -1].todense().tolist()]
 
 		logging.debug("Made dense A|b")
 
@@ -114,7 +152,7 @@ faceColours=False):
 
 
 			floorUA = [math.floor(x) for x in uA]
-			logging.debug("Variables that need flooring, and amount to floor: {}".format(sparselyLabel([a - b for a,b in zip(uA, floorUA)])))
+			logging.info("Variables that need flooring, and amount to floor: {}".format(sparselyLabel([a - b for a,b in zip(uA, floorUA)])))
 
 			return floorUA
 
@@ -122,8 +160,8 @@ faceColours=False):
 		originalNoEquations = len(A)
 		noCuttingPlanes = 0
 		cpViolation = 1e20
-		d = 0.01
-		while noCuttingPlanes == 0 or  cpViolation > d:
+		d = 0.5
+		while noCuttingPlanes == 0 or  cpViolation >= d:
 			positiveSupport = getPositiveSupport(pointToSeparate)
 			cpProb = cgsep.makeCgLp(pointToSeparate, A, b, d)
 
