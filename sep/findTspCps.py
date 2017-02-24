@@ -161,7 +161,7 @@ faceColours=False):
 		noCuttingPlanes = 0
 		cpViolation = 1e20
 		d = 0.5
-		while noCuttingPlanes == 0 or  cpViolation >= d:
+		while noCuttingPlanes == 0 or  cpViolation > 0:
 			positiveSupport = getPositiveSupport(pointToSeparate)
 			cpProb = cgsep.makeCgLp(pointToSeparate, A, b, d)
 
