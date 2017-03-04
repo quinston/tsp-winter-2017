@@ -9,7 +9,7 @@
 \DeclareMathOperator{\Sl}{sl}
 \begin{document}
 \begin{theorem}
-Let $G=(V,E)$ be planar with $\abs{V}=n$, $\abs{E}=m$. Then 
+Let $G=(V,E)$ have no $K_5$ minor with $\abs{V}=n$, $\abs{E}=m$. Then 
 
 $$\xc(P^{\text{cut}}(G)) \in O(n^3)$$
 \end{theorem}
@@ -21,10 +21,12 @@ $$R(H) = \cbr{x\in \mathbf{R}^{E'}: \begin{array}{lll} x(F) - x(C-F) & \leq \abs
 In general, if $E' \subseteq E'' \subseteq {V'\choose 2}$, then
 $R(H) = \proj_{E'}((V', E''))$.
 
-Since $G$ is planar, $P^{\text{cut}}(G) = R(G) = \proj_{E} R((V, {V\choose 2}))=\proj_{E} R(K_n)$.
+	In general, $P^{\text{cut}}(G) \subsetneqq R(G)$.
+	Since $G$ has no $K_5$ minor, $P^{\text{cut}}(G) = R(G)$.
+	Hence $P^{\text{cut}}(G) = \proj_{E} R((V, {V\choose 2}))=\proj_{E} R(K_n)$.
 
 We exhibit a randomized communication protocol exchanging $3\log n + 1$ bits
-to compute the slack $\Sl_{\text{cut}}((C,F), \delta(S)$ of
+	to compute the slack $\Sl((C,F), \delta(S))$ of
 the inequality
 
 $$x(F) - x(C-F)\leq \abs{F}-1$$
@@ -70,4 +72,8 @@ Hence, there exists a communication protocol computing
 $\Sl((C,F), \delta(S))$ in $3\log n+O(1)$ bits. 
 So $\xc(P^{\text{cut}}(G)) \in 2^{3\log n + O(1)} = O(n^3)$. 
 \end{proof}
+
+\begin{theorem}
+
+\end{theorem}
 \end{document}
