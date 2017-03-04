@@ -1,0 +1,73 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{commath}
+\newtheorem{theorem}{Theorem}
+\DeclareMathOperator{\xc}{xc}
+\DeclareMathOperator{\proj}{Proj}
+\DeclareMathOperator{\Sl}{sl}
+\begin{document}
+\begin{theorem}
+Let $G=(V,E)$ be planar with $\abs{V}=n$, $\abs{E}=m$. Then 
+
+$$\xc(P^{\text{cut}}(G)) \in O(n^3)$$
+\end{theorem}
+\begin{proof}
+For any graph $H=(V', E')$, define the polytope $R(H)$:
+
+$$R(H) = \cbr{x\in \mathbf{R}^{E'}: \begin{array}{lll} x(F) - x(C-F) & \leq \abs{F} - 1 & \text{$C$ a cycle, $F\subseteq E'$, $\abs{F}$ odd} \\ 0 \leq x \leq 1 \end{array}}$$
+
+In general, if $E' \subseteq E'' \subseteq {V'\choose 2}$, then
+$R(H) = \proj_{E'}((V', E''))$.
+
+Since $G$ is planar, $P^{\text{cut}}(G) = R(G) = \proj_{E} R((V, {V\choose 2}))=\proj_{E} R(K_n)$.
+
+We exhibit a randomized communication protocol exchanging $3\log n + 1$ bits
+to compute the slack $\Sl_{\text{cut}}((C,F), \delta(S)$ of
+the inequality
+
+$$x(F) - x(C-F)\leq \abs{F}-1$$
+
+for a cut $\delta(S)\subseteq E$, a cycle $C\subseteq E$, and an odd-size
+subset $F\subseteq C$.
+
+Note that if $C$ has a chord $uv\in C$, then the above inequality is redundant.
+Let $P_0, P_1$ be distinct $u,v$-paths in  $C$. Without loss
+of generality, assume $\abs{P_0\cap F}$ is even. Then the above inequality
+is the sum of the inequalities for $((P_0 + uv, (P_0 \cap F)\cup\cbr{uv}), \delta(S))$
+and for $((P_1 + uv, P_1\cap F), \delta(S))$.
+
+Hence the slack for a cycle with chords is the sum of the slacks of the cycles
+between the chords. In a complete graph, every cycle has enough chords
+that the slack for a cycle can be computed by summing the slacks for
+cycles of length three. As a lift for $\delta(S)$ 
+from $\mathbf{R}^E$ to $\mathbf{R}^{{V\choose 2}}$,
+we can use $\delta_{K_n}(S)$ since $P^{\text{cut}}(K_n) \subseteq R(K_n)$.
+
+Now we describe the protocol. Beforehand, Alice and Bob agree
+on a triangulation $C_1, C_2, \cdots, C_{\abs{C}-2}$ of every cycle $C$ in $G$,
+and they also agree, for every odd-size $F\subseteq C$, on how to subdivide
+$F$ and the chords $C_i\cap C_j$, $i\neq j$ into sets 
+$F_1, F_2,\cdots, F_{\abs{C}-2}$ so that $\sum_{i=1}^{\abs{C}-2} \Sl((C_i, F_i),\delta(S)) = \Sl((C, F), \delta(S))$.
+
+Alice receives a cycle $C$ and odd-size $F\subseteq C$. Bob receives
+a cut $\delta(S)$. Alice chooses $r\in \sbr{\abs{C}-2}$ uniformly
+at random, and sends the vertices $q_1,q_2,q_3$ of $C_r$ with $3\log n$ bits,
+in that order.
+Bob sends back three bits $b_{12}b_{23}b_{13}$ where $b_{st}$ is 1
+if and only if $q_sq_t \in\delta(S)$.
+Now, Alice knows $\abs{delta{S}\cap F_r}$ and $\abs{\delta{S}\cap (C_r-F_r)}$,
+so she can compute $\Sl((C_r, F_r),\delta(S))$. Alice outputs
+$(\abs{C}-2)\Sl((C_r,F_r),\delta(S))$. The total cost
+of the communication is $3\log n + O(1)$.
+
+Alice has a uniform $\frac{1}{\abs{C}-2}$ probability of choosing
+any particular triangle $C_r$, so in expectation, Alice computes
+$\frac{1}{\abs{C}-2}\sum_{i=1}^{\abs{C}-2}\del{\abs{C}-2}\Sl((C_i,F_i),\delta(S)) = \Sl((C,F), \delta(S))$. 
+
+Hence, there exists a communication protocol computing 
+$\Sl((C,F), \delta(S))$ in $3\log n+O(1)$ bits. 
+So $\xc(P^{\text{cut}}(G)) \in 2^{3\log n + O(1)} = O(n^3)$. 
+\end{proof}
+\end{document}
