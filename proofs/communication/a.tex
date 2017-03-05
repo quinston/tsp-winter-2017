@@ -9,7 +9,7 @@
 \DeclareMathOperator{\Sl}{sl}
 \begin{document}
 \begin{theorem}
-Let $G=(V,E)$ have no $K_5$ minor with $\abs{V}=n$, $\abs{E}=m$. Then 
+	Let $G=(V,E)$ be a graph, possibly with loops and parallel edges, with no $K_5$ minor with $\abs{V}=n$, $\abs{E}=m$. Then 
 
 $$\xc(P^{\text{cut}}(G)) \in O(n^3)$$
 \end{theorem}
@@ -18,21 +18,28 @@ For any graph $H=(V', E')$, define the polytope $R(H)$:
 
 $$R(H) = \cbr{x\in \mathbf{R}^{E'}: \begin{array}{lll} x(F) - x(C-F) & \leq \abs{F} - 1 & \text{$C$ a cycle, $F\subseteq E'$, $\abs{F}$ odd} \\ 0 \leq x \leq 1 \end{array}}$$
 
-In general, if $E' \subseteq E'' \subseteq {V'\choose 2}$, then
+In general, if $E' \subseteq E''$ where $E''$ is a multiset on $E$, then
 $R(H) = \proj_{E'}((V', E''))$.
 
 	In general, $P^{\text{cut}}(G) \subsetneqq R(G)$.
 	Since $G$ has no $K_5$ minor, $P^{\text{cut}}(G) = R(G)$.
-	Hence $P^{\text{cut}}(G) = \proj_{E} R((V, {V\choose 2}))=\proj_{E} R(K_n)$.
+	Hence $P^{\text{cut}}(G) = \proj_{E} R((V, E\cup {V\choose 2}))=\proj_{E} R(K_n \cup E)$.
+	(Note that it is possible that $E\not\subseteq {V\choose 2}$ since
+	$G$ can have parallel edges and loops.)
 
-We exhibit a randomized communication protocol exchanging $3\log n + 1$ bits
+	We exhibit a randomized communication protocol exchanging $3\log n + O(1)$ bits
 	to compute the slack $\Sl((C,F), \delta(S))$ of
 the inequality
 
 $$x(F) - x(C-F)\leq \abs{F}-1$$
 
-for a cut $\delta(S)\subseteq E$, a cycle $C\subseteq E$, and an odd-size
+	for a cut $\delta(S)\subseteq E$, a (simple) cycle $C\subseteq E$, and an odd-size
 subset $F\subseteq C$.
+
+	If $C$ is a loop, then $\delta(S)\cap C = 0$. No communication is required.
+
+	Now, assume $C$ is not a loop. Note that a simple cycle can only use
+	one of any set of parallel edges.
 
 Note that if $C$ has a chord $uv\in C$, then the above inequality is redundant.
 Let $P_0, P_1$ be distinct $u,v$-paths in  $C$. Without loss
@@ -41,17 +48,18 @@ is the sum of the inequalities for $((P_0 + uv, (P_0 \cap F)\cup\cbr{uv}), \delt
 and for $((P_1 + uv, P_1\cap F), \delta(S))$.
 
 Hence the slack for a cycle with chords is the sum of the slacks of the cycles
-between the chords. In a complete graph, every cycle has enough chords
+between the chords. If there is an edge between every vertex, then 
+	every cycle has enough chords
 that the slack for a cycle can be computed by summing the slacks for
 cycles of length three. As a lift for $\delta(S)$ 
-from $\mathbf{R}^E$ to $\mathbf{R}^{{V\choose 2}}$,
-we can use $\delta_{K_n}(S)$ since $P^{\text{cut}}(K_n) \subseteq R(K_n)$.
+from $\mathbf{R}^E$ to $\mathbf{R}^{E\cup{V\choose 2}}$,
+we can use $\delta_{K_n\cup E}(S)$ since $P^{\text{cut}}(K_n \cup E) \subseteq R(K_n\cup E)$.
 
 Now we describe the protocol. Beforehand, Alice and Bob agree
 on a triangulation $C_1, C_2, \cdots, C_{\abs{C}-2}$ of every cycle $C$ in $G$,
 and they also agree, for every odd-size $F\subseteq C$, on how to subdivide
-$F$ and the chords $C_i\cap C_j$, $i\neq j$ into sets 
-$F_1, F_2,\cdots, F_{\abs{C}-2}$ so that $\sum_{i=1}^{\abs{C}-2} \Sl((C_i, F_i),\delta(S)) = \Sl((C, F), \delta(S))$.
+$F$ and the chords $C_i\cap C_j$, $i\neq j$ into odd-size sets 
+	$F_1\subseteq C_1; F_2\subseteq C_2;\cdots; F_{\abs{C}-2}\subseteq C_{\abs{C}-2}$ so that $\sum_{i=1}^{\abs{C}-2} \Sl((C_i, F_i),\delta(S)) = \Sl((C, F), \delta(S))$.
 
 Alice receives a cycle $C$ and odd-size $F\subseteq C$. Bob receives
 a cut $\delta(S)$. Alice chooses $r\in \sbr{\abs{C}-2}$ uniformly
@@ -74,6 +82,86 @@ So $\xc(P^{\text{cut}}(G)) \in 2^{3\log n + O(1)} = O(n^3)$.
 \end{proof}
 
 \begin{theorem}
+	Let $G=(V,E)$ be planar. Then the perfect matching polytope has
+	cubic extension complexity. That is,
 
+	$$\xc(P^{\text{PM}}(G)) \in O(n^3)$$
 \end{theorem}
+\begin{proof}
+	We exhibit a randomized communication protocol exchanging $3\log n+O(1)$
+	bits to compute the slack $\Sl(S, M)$ of the inequality
+	
+	$$ x(\delta(S)) \geq 1$$
+
+	for an odd-size $S\subseteq V$ and a perfect matching $M$.
+
+	Since a perfect matching $M$ exists, $\abs{V}$ is even.
+	Let $J$ be a $V$-join. Since $\abs{S}$ is odd, 
+	$\abs{S}$ is a $V$-cut. 
+	So, $\abs{\delta(S)\cap J}$ is odd.
+
+	Let $Y = J\bigtriangleup M$. Since $J$ and $M$ are both $V$-joins,
+	$Y$ is a $V\bigtriangleup V$-join or $\varnothing$-join.
+	Equivalently, $Y$ induces an Eulerian subgraph of $G$.
+	By planar duality, $Y$ induces a cut of $G^*$.
+
+	Note that:
+	\begin{align*}
+		\Sl_\text{cut, $G$}(S, M) &= \abs{\delta(S)\cap M} - 1 \\
+		&= \abs{\delta(S)\cap (Y \bigtriangleup J)} - 1 \\
+		&= \abs{\delta(S)\cap Y} + \abs{\delta(S)\cap J} - 2\abs{\delta(S)\cap Y \cap J} - 1 \\
+		&= \abs{\delta(S)\cap J} - 1 - \del{\abs{Y\cap(\delta(S)-(J\cap\delta(S)))} - \abs{Y\cap\delta(S)\cap J}} \\
+		&= \Sl_\text{cut, $G^*$}((\delta(S), \delta(S)\cap J), Y) 
+	\end{align*}
+
+	where $\delta(S)$ is a cycle of $G^*$,
+	and $\delta(S)\cap J$ is an odd-size subset.
+
+	Hence, Alice and Bob need only compute the cut slack in $G^*$ as above
+	in order to compute the perfect matching slack in $G$.
+\end{proof}
+
+	\begin{theorem}
+	Let $G=(V,E)$ be a simple plane 2-edge-connected graph. Then,
+		$$\xc(SEP(G)) \in O(n)$$
+	\end{theorem}
+\begin{proof}
+	We exhibit a randomized communication protocol exchanging
+	$\log n + O(1)$ bits to compute the slack $\Sl(S, X)$ of the
+	inequality
+
+	$$x(\gamma(S)) \leq \abs{S}-1$$
+
+	for a set $S\subsetneqq V, 2\leq \abs{S} \leq \frac{\abs{V}}{2}$
+	and $\delta(S)$ a minimal cut,
+	and a vertex $X$ of $SEP(G)$.
+	In advance, Alice and Bob agree on a vertex $v_\infty$.
+	Alice and Bob also number the faces of $G$.
+	
+	Alice receives $S\subsetneqq V$. 
+	If $v_\infty\in S$, Alice replaces $S$ with $V-S$.
+	Bob receives $X\in SEP(G)$.
+
+	Bob uses Pashkovich's compact spanning tree formulation to build 
+	a fractional spanning arborescence of $(G-v_\infty)^*$
+	in polynomial time, fixing the $x_e$ variables according to $X$.
+
+	Let $F'$ be the set of faces $F(G[S])\cap F(G)$ 
+	of  $G[S]$ that are also faces of $G$.
+	By elementary manipulations, $x(\gamma(S))$ is equal to $z(\delta^{\text{out}}(F'))$, where a directed edge points "out" if its head is in a face of $G[S]$
+	containing $v_\infty$ in its interior.
+	Let $k=\abs{\delta^{\text{out}}(F')}$.
+
+	Alice picks uniformly at random some directed edge $e\in \delta^{\text{out}}(F')$. 
+	Let $u_0,u_1$ be the faces on the ends of $e$, where
+	$u_0$ was lower numbered than $u_1$. Since
+	$G$ is 2-edge-connected, $u_0\neq u_1$.
+	Alice sends
+	the name of $e$ and a bit $b$, where $e$ is pointing at $u_b$.
+
+	Bob sends back a random bit $c$ where $c=1$ with probability $z_{e,u_b}$.
+	Alice outputs $kc$.
+
+	In expectation, this protocol computes $k\sum_{(e,u)\in\delta^{\text{out}}(F')} \frac{1}{k} z_{e,u} = z(\delta^{\text{out}}(F'))$. This protocol costs $\log n + O(1)$.
+\end{proof}
 \end{document}
