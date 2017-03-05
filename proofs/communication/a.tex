@@ -83,7 +83,7 @@ So $\xc(P^{\text{cut}}(G)) \in 2^{3\log n + O(1)} = O(n^3)$.
 
 \begin{theorem}
 	Let $G=(V,E)$ be planar. Then the perfect matching polytope has
-	cubic extension complexity. That is,
+	at most cubic extension complexity. That is,
 
 	$$\xc(P^{\text{PM}}(G)) \in O(n^3)$$
 \end{theorem}
@@ -148,7 +148,7 @@ So $\xc(P^{\text{cut}}(G)) \in 2^{3\log n + O(1)} = O(n^3)$.
 
 	Let $F'$ be the set of faces $F(G[S])\cap F(G)$ 
 	of  $G[S]$ that are also faces of $G$.
-	By elementary manipulations, $x(\gamma(S))$ is equal to $z(\delta^{\text{out}}(F'))$, where a directed edge points "out" if its head is in a face of $G[S]$
+	By elementary manipulations, for $v_\infty\not\in S$, $x(\gamma(S))$ is equal to $z(\delta^{\text{out}}(F'))$, where a directed edge points "out" if its head is in a face of $G[S]$
 	containing $v_\infty$ in its interior.
 	Let $k=\abs{\delta^{\text{out}}(F')}$.
 
@@ -163,5 +163,51 @@ So $\xc(P^{\text{cut}}(G)) \in 2^{3\log n + O(1)} = O(n^3)$.
 	Alice outputs $kc$.
 
 	In expectation, this protocol computes $k\sum_{(e,u)\in\delta^{\text{out}}(F')} \frac{1}{k} z_{e,u} = z(\delta^{\text{out}}(F'))$. This protocol costs $\log n + O(1)$.
+\end{proof}
+
+\begin{theorem}
+	Let $G=(V,E)$ be a simple plane 2-edge-connected graph. Then
+	the polytope $COMB(G)$, denoting $SEP(G)$ intersected
+	with all comb inequalities where each tooth $T_i$ 
+	and both sides $A_i = T_i\cap H, B_i = T_i - H$ 
+	of the tooth all define minimal cuts,
+	has at most polynomial extension complexity. Specifically,
+
+	$$\xc(COMB(G)) \in O(n^8)$$
+\end{theorem}
+
+\begin{proof}
+	As a sidenote, a comb inequality where any
+	of $\delta(T_i), \delta(A_i), \delta(B_i)$
+	do not define a minimal
+	cut cannot be violated  by a fractional
+	vertex of $SEP(G)$ since the slack of the comb inequality
+	is at least 1, and 
+	 Chv\'{a}tal cuts can be violated only by strictly less than 1.
+
+	The slack of a comb inequality for 
+	a comb $(H, (T_i)_{i=1}^p)$ and a vertex $x$ of $COMB(G)$ is:
+
+	\begin{align*}
+		\Sl((H, (T_i)_i), \tau) &= (x(\delta(H)) + \sum_{i=1}^p x(\delta(T_i))) - (3p+1) \\
+		&= (x(\delta(H)) - 1) + \sum_{i=1}^p\del{x(\delta(T_i)) - 3}
+	\end{align*}
+
+	In advance, Alice and Bob agree on triangulations for all (simple)
+	cycles of $G$,
+	as in $P^{\text{cut}}(G)$'s communication protocol. Also,
+	for each edge $e=uv\in G$, Alice and Bob agree on triangulations
+	for all (simple) cycles of length three or more $G+f$, where $f$ is a parallel
+	edge between $u$ and $v$, and the cycle $ef$ is excluded.
+
+	Note that $COMB(G) \subseteq R(G^*)$, so $x\in R(G^*)$.
+
+	Note that
+
+	\begin{align*}
+		x(\delta(T_i))- 3 = \del{x(\delta(A_i) \bigtriangleup \delta(A_i:B_i)) - 1} + \del{x(\delta(B_i)\bigtriangleup\delta(A_i:B_i)) - 1} + \del{x(\delta(T_i)) - 2} + 1
+	\end{align*}
+
+	Oh  no I messed up
 \end{proof}
 \end{document}
