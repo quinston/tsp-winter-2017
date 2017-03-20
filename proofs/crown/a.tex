@@ -1,0 +1,95 @@
+\documentclass{article}
+\usepackage{commath}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{tikz}
+\newtheorem{theorem}{Theorem}
+\begin{document}
+Let $G=(V, \mathcal{E})$ be a hypergraph with $\mathcal{E}\subseteq 2^V$.
+
+Let $E = {V\choose 2}$.
+
+For $\alpha\in\mathbf{Z}^{\mathcal{E}}$, $x\in \mathbf{R}^{E}$, let
+$\mathcal{H}\circ_\alpha x$ denote $ \sum_{S\in \mathcal{E}}\alpha_S x(\delta(S))$.
+Let $\mathcal{H}\circ x$ mean $\mathcal{H}\circ_\mathbf{1} x$.
+
+There exist $x^* \in (SEP(n) - TSP(n))$ and $\alpha\in\mathbf{Z}^{\mathcal{E}}$
+such that $\mathcal{H}\circ x^* \geq \mu(\mathcal{H})$ but
+$\mathcal{H}\circ_\alpha x^* < \mu(\mathcal{H}, \alpha)$.
+
+\begin{theorem}[Naddef]
+Let $2\leq k\in \mathbf{Z}$. Number the vertices of $K_{4k}$ and designate
+the edges of the Hamiltonian circuit $1,2,3,\cdots ,4k,1$ as \emph{cycle-edges}.
+Call an edge $ij \in E$ a \emph{diameter} if $\abs{i-j} = 2k$.
+
+\begin{enumerate}
+\item Define $x^* \in SEP(4k)$ so:
+
+$$x_{e}^*=\begin{cases}
+\frac{1}{2} & \text{$e$ is a cycle-edge} \\
+1 & \text{$e$ is a diameter} \\
+0 & \text{otherwise}
+\end{cases}$$
+
+Then $x^*$ is a vertex of $SEP(4k)$.
+
+\item Define $c\in\mathbf{R}^E$ so:
+
+$$c_{v,v+j} = \begin{cases}
+4k-6+\abs{j} & 1\leq\abs{j}\leq 2k-1 \\
+2(k-1) & j=2k
+\end{cases}$$
+
+$$c_0 = 12k(k-1)-2$$
+
+Then $cx\geq c_0$ is facet-defining for $TSP(4k)$
+and violated by $x^*$.
+\end{enumerate}
+\end{theorem}
+
+Let $\mathcal{E} = E$. We put $cx\geq 12k(k-1)-2$ in hypergraph form. 
+First we subtract all degree equations $3k-3$ times, obtaining:
+
+
+$$c'_{v,v+j}=\begin{cases}
+-2k+\abs{j} & 1\leq\abs{j}\leq 2k-1 \\
+-4k+4 & j=2k
+\end{cases}$$
+
+$$c'_0 = \del{12k(k-1)-2} - \del{2(4k)(3k-3)} = 12k(1-k)-2 $$
+
+Note that $\mathbf{1}^Tc' = -8k^3-4k^2+8k$.
+
+Recall that $-2x(\gamma(\cbr{u,v})) = x(\delta(\cbr{u,v})) - x(\delta(u))-x(\delta(v)) = x(\delta(\cbr{u,v}))-4$.
+
+After multiplying both sides of
+the crown inequality by 2, we find that the equivalent hypergraph inequality
+has weight $\alpha_{\cbr{u,v}} = -c'_{uv}$ for each $\cbr{u,v}\in{V\choose 2}$.
+(Note that $\alpha \geq 0$.)
+Moving all the 4's to the right side
+yields $2(12k(1-k)-2) - 4(\mathbf{1}^Tc') = 32k^3-8k^2-8k-4$.
+
+Since $cx\geq c_0$ is facet-defining, we
+know immediately that $\mu(\mathcal{H}, \alpha) = 32k^3-8k^2-8k-4$.
+
+Now, note that $\mu(\mathcal{H}) = 8k(4k-2)$ since each
+vertex is surrounded by $4k-2$ borders;
+using an edge crosses twice that many borders;
+and a Hamiltonian circuit has length $4k$.
+
+
+Note that $\mathcal{H}\circ x^* = (\frac{1}{2}(4k)+(1)(2k))(2(4k-2)) = 32k^2-16k = 8k(4k-2)$.
+Hence $\mathcal{H}\circ x\geq \mu(\mathcal{H})$ is tight at $x^*$.
+
+Assigning weight $\alpha_S$ to each border $\delta(S)$,
+each vertex is surrounded by $2(\sum_{i=1}^{2k-1} (2k-i)) + (4k-4) = 4k^2+2k-4$ borders.
+Then, a circuit-edge has weight $2((4k^2+2k-4)-(2k-1)) = 8k^2-6$.
+A diameter has weight $2((4k^2+2k-4)-(4k-4)) = 8k^2-4k$.
+
+Hence we have 
+$\mathcal{H}\circ_\alpha x^* = \frac{1}{2}(4k)(8k^2-6) + 1(2k)(8k^2-4k) = 32k^3-8k^2-12k$. 
+
+Hence $\mu(H,\alpha) - (\mathcal{H}\circ_\alpha x^*) = 4k-4 > 0$ for all $k\geq 2$.
+
+\end{document}
