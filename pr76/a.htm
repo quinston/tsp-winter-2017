@@ -1978,7 +1978,7 @@ tspan.highlight {
 2.5714 3 56 57 58 
 2.8571 2 58 59 </p>
 <script type="text/javascript">
-let theData = document.body.querySelector("#cutData").innerText.split("\n").map((x) => x.split(" ").slice(0, -1)).map((x) => ({cutValue: x[0], cutElements: x.slice(1)}));
+let theData = document.body.querySelector("#cutData").innerText.split("\n").map((x) => x.split(" ").slice(0, -1)).map((x) => ({cutValue: x[0], cutElements: x.slice(3)}));
 d3.select("#currentCut").selectAll("option").data(theData).enter().append("option").text((x) => x.cutElements);
 d3.select("#currentCut").on("change", () => {
 	let sel = document.querySelector("#currentCut");
