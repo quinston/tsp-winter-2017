@@ -34,5 +34,21 @@ def getDominoes():
 
 	return d
 
-d = (getDominoes())
+d = getDominoes()
 print(d.verticesToContainingDominoes)
+
+try:
+	with cplex.Cplex() as cpx:
+		noDominoes = len(d.dominoToWeight)
+		print("Adding {} binary variables".format(noDominoes))
+		cpx.variables.add(names = ["x{}".format(i) for i in range(noDominoes)], types=cpx.variables.type.binary * noDominoes)
+
+		print("Adding constraints")
+		# The set of dominoes sharing any particular vertex form a clique
+		for v,dominoes in d.verticesToContainingDominoes.items():
+			cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=list(dominoes), val=[1]*len(dominoes))], rhs=[1], senses='L')
+		
+		cpx.write('aaaa.lp')
+except cplex.exceptions.CplexError as e:
+	print(e)
+	raise e
