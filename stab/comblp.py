@@ -2,8 +2,7 @@ import cplex
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('noTeeth', type=int, help='number of teeth per stable set')
-parser.add_argument('noStableSets', type=int, help='desired number of stable sets')
+parser.add_argument('--no-stable-sets', type=int, help='desired number of stable sets')
 parser.add_argument('filename')
 args = parser.parse_args()
 
@@ -47,8 +46,8 @@ try:
 
 		print("Setting objective")
 		cpx.objective.set_sense(cpx.objective.sense.minimize)
-		for var in allDominoVariableNames:
-			cpx.objective.set_linear(var, 1)
+		for domino,weight in enumerate(d.dominoToWeight):
+			cpx.objective.set_linear("x{}".format(domino), weight)
 
 		print("Adding clique constraints")
 		# The set of dominoes sharing any particular vertex form a clique
@@ -58,12 +57,25 @@ try:
 				cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=["x{}".format(i) for i in dominoes], val=[1]*len(dominoes))], rhs=[1], senses='L')
 		
 		print("Adding parity variable 'k'")
-		cpx.variables.add(names = ["k"], types=cpx.variables.type.integer)
+		cpx.variables.add(names = ["k"], types=cpx.variables.type.integer, lb=[0])
 
-		print("Adding parity constraint sum(x) = 2k+1")
-		cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames + ["k"], val=([1]*noDominoes) + [-2])], rhs=[1], senses='E')
+		print("Adding parity constraint sum(x) = 2k+3")
+		cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames + ["k"], val=([1]*noDominoes) + [-2])], rhs=[3], senses='E')
+
+		cpx.parameters.mip.limits.populate.set(args.no_stable_sets)
+		cpx.parameters.mip.limits.nodes.set(10000)
+		cpx.parameters.mip.tolerances.absmipgap.set(0.1)
 
 		cpx.write('oddstab.lp')
+
+		print("Populating!")
+		cpx.populate_solution_pool()
+
+		print("Printing solutions:")
+		for i in range(cpx.solution.pool.get_num()):
+			print("Solution {}: {}".format(i, cpx.solution.pool.get_values(i)))
+			print("Objective value {}: {}".format(i, cpx.solution.pool.get_objective_value(i)))
+
 		
 except cplex.exceptions.CplexError as e:
 	print(e)
