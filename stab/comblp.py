@@ -40,15 +40,31 @@ print(d.verticesToContainingDominoes)
 try:
 	with cplex.Cplex() as cpx:
 		noDominoes = len(d.dominoToWeight)
-		print("Adding {} binary variables".format(noDominoes))
-		cpx.variables.add(names = ["x{}".format(i) for i in range(noDominoes)], types=cpx.variables.type.binary * noDominoes)
+		allDominoVariableNames = ["x{}".format(i) for i in range(noDominoes)]
 
-		print("Adding constraints")
+		print("Adding {} binary variables".format(noDominoes))
+		cpx.variables.add(names = allDominoVariableNames, types=cpx.variables.type.binary * noDominoes)
+
+		print("Setting objective")
+		cpx.objective.set_sense(cpx.objective.sense.minimize)
+		for var in allDominoVariableNames:
+			cpx.objective.set_linear(var, 1)
+
+		print("Adding clique constraints")
 		# The set of dominoes sharing any particular vertex form a clique
 		for v,dominoes in d.verticesToContainingDominoes.items():
-			cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=list(dominoes), val=[1]*len(dominoes))], rhs=[1], senses='L')
+			# If only one tooth contains a given vertex, the constraint is redundant since the tooth variable is 0-1
+			if len(dominoes) > 1:
+				cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=["x{}".format(i) for i in dominoes], val=[1]*len(dominoes))], rhs=[1], senses='L')
 		
-		cpx.write('aaaa.lp')
+		print("Adding parity variable 'k'")
+		cpx.variables.add(names = ["k"], types=cpx.variables.type.integer)
+
+		print("Adding parity constraint sum(x) = 2k+1")
+		cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames + ["k"], val=([1]*noDominoes) + [-2])], rhs=[1], senses='E')
+
+		cpx.write('oddstab.lp')
+		
 except cplex.exceptions.CplexError as e:
 	print(e)
 	raise e
