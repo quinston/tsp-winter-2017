@@ -74,15 +74,14 @@ try:
 		cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames + ["k"], val=([1]*noDominoes) + [-2])], rhs=[3], senses='E')
 
 		cpx.parameters.mip.limits.populate.set(args.no_stable_sets)
-		cpx.parameters.mip.limits.nodes.set(10000)
-		cpx.parameters.mip.tolerances.absmipgap.set(0.1)
+		cpx.parameters.mip.limits.nodes.set(10000 * args.no_stable_sets)
 
 		cpx.write('oddstab.lp')
 
 		logging.info("Populating!")
 		cpx.populate_solution_pool()
 
-		logging.info("Printing solutions:")
+		logging.info("Printing {} solutions:".format(cpx.solution.pool.get_num()))
 		for i in range(cpx.solution.pool.get_num()):
 			#[:-1] to exclude the value of k
 			logging.info("Solution {}: {}".format(i, [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]))
