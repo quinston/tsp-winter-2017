@@ -26,7 +26,7 @@ def getDominoes():
 		noDominoes = int(line[1])
 
 		for v in range(V):
-			d.verticesToContainingDominoes[v] = set()
+			d.verticesToContainingDominoes[v] = list()
 
 		numDomino = 0
 		for line in f:
@@ -35,7 +35,7 @@ def getDominoes():
 			# For each vertex w in the domino T, record T in w's  list 
 			#:-1 is to avoid trailing space
 			for w in lineSplit[3:-1]:
-				d.verticesToContainingDominoes[int(w)].add(numDomino)
+				d.verticesToContainingDominoes[int(w)].append(numDomino)
 			numDomino += 1
 
 	return d
@@ -61,7 +61,8 @@ try:
 		for v,dominoes in d.verticesToContainingDominoes.items():
 			# If only one tooth contains a given vertex, the constraint is redundant since the tooth variable is 0-1
 			if len(dominoes) > 1:
-				cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=["x{}".format(i) for i in dominoes], val=[1]*len(dominoes))], rhs=[1], senses='L')
+				# Assume the first however many variables are  domino variables: use indices directly rather than names
+				cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=dominoes, val=[1]*len(dominoes))], rhs=[1], senses='L')
 			counter += 1
 			if counter % 100 == 0:
 				logging.info("Added {} constraints".format(counter))
@@ -83,7 +84,8 @@ try:
 
 		logging.info("Printing solutions:")
 		for i in range(cpx.solution.pool.get_num()):
-			logging.info("Solution {}: {}".format(i, [j for j,x in enumerate(cpx.solution.pool.get_values(i)) if x == 1]))
+			#[:-1] to exclude the value of k
+			logging.info("Solution {}: {}".format(i, [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]))
 			logging.info("Objective value {}: {}".format(i, cpx.solution.pool.get_objective_value(i)))
 
 		
