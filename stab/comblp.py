@@ -20,6 +20,9 @@ def getDominoes():
 	d = Dominoes()
 	d.verticesToContainingDominoes = dict()
 	d.dominoToWeight = []
+	d.dominoToA = []
+	d.dominoToB = []
+
 	with open(args.filename) as f:
 		line = f.readline().split()
 		V = int(line[0])
@@ -32,10 +35,18 @@ def getDominoes():
 		for line in f:
 			lineSplit = line.split()
 			d.dominoToWeight.append(float(lineSplit[0]))
-			# For each vertex w in the domino T, record T in w's  list 
+
+# For each vertex w in the domino T, record T in w's  list 
 			#:-1 is to avoid trailing space
 			for w in lineSplit[3:-1]:
 				d.verticesToContainingDominoes[int(w)].append(numDomino)
+
+			sizeA = int(lineSplit[1])
+			d.dominoToA.append(lineSplit[3:sizeA+3])
+			d.dominoToB.append(lineSplit[sizeA+3:])
+			#logging.info("Domino: {} / {}".format(d.dominoToA[-1], d.dominoToB[-1]))
+
+
 			numDomino += 1
 
 	return d
