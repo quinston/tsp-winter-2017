@@ -1,6 +1,7 @@
 import cplex
 import argparse
 import logging
+from igraph import Graph
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -10,11 +11,14 @@ logger.addHandler(ch)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-stable-sets', type=int, help='desired number of stable sets')
-parser.add_argument('filename')
+parser.add_argument('dom_filename', help='dominos')
+parser.add_argument('x_filename', help='LP solution')
 args = parser.parse_args()
+print(args)
 
 class Dominoes:
 	pass
+
 
 def getDominoes():
 	d = Dominoes()
@@ -23,7 +27,7 @@ def getDominoes():
 	d.dominoToA = []
 	d.dominoToB = []
 
-	with open(args.filename) as f:
+	with open(args.dom_filename) as f:
 		line = f.readline().split()
 		V = int(line[0])
 		noDominoes = int(line[1])
@@ -42,8 +46,8 @@ def getDominoes():
 				d.verticesToContainingDominoes[int(w)].append(numDomino)
 
 			sizeA = int(lineSplit[1])
-			d.dominoToA.append(lineSplit[3:sizeA+3])
-			d.dominoToB.append(lineSplit[sizeA+3:])
+			d.dominoToA.append([int(x) for x in lineSplit[3:sizeA+3]])
+			d.dominoToB.append([int(x) for x in lineSplit[sizeA+3:]])
 			#logging.info("Domino: {} / {}".format(d.dominoToA[-1], d.dominoToB[-1]))
 
 
@@ -52,6 +56,66 @@ def getDominoes():
 	return d
 
 d = getDominoes()
+
+def getSupportGraph():
+	with open(args.x_filename) as f:
+		line = f.readline().split()
+		V = int(line[0])
+		E = int(line[1])
+
+		g = Graph()
+		g.add_vertices(V)
+
+		for line in f:
+			lineSplit = line.split()
+			u,v = [int(x) for x in lineSplit[:2]]
+			weight = float(lineSplit[2])
+			g.add_edge(u, v)
+			g.es[g.get_eid(u,v)]["weight"] = weight
+
+		return g
+
+g = getSupportGraph()
+
+"""
+Given indices to teeth, finds min cut containing union of the smallest sides
+of each domino
+"""
+def findHandle(dominoes, graph, teethIndices):
+	"""
+	As a heuristic, put the largest sides together on one side of the handle cut 
+
+	If the sides have the same size, we pick A 
+	"""
+	INFINITY = len(graph.es)
+
+	graph.add_vertex(name="s")
+	graph.add_vertex(name="t")
+
+	for i in teethIndices:
+		if len(dominoes.dominoToA[i]) >= len(dominoes.dominoToB[i]):
+			sSide = dominoes.dominoToA[i] 
+			tSide = dominoes.dominoToB[i]
+		else:
+			sSide = dominoes.dominoToB[i] 
+			tSide = dominoes.dominoToA[i]
+		for v in sSide:
+			graph.add_edge(v, "s")
+			graph.es[g.get_eid(v, "s")]["weight"] = INFINITY
+		for v in tSide:
+			graph.add_edge(v, "t")
+			graph.es[g.get_eid(v, "t")]["weight"] = INFINITY
+
+	# A Cut object
+	cut = graph.st_mincut("s", "t", capacity="weight")
+	smallerSide = cut.partition[0] if len(cut.partition[0]) <= len(cut.partition[1]) else cut.partition[1]
+	# Get rid of s or t
+	smallerSide = smallerSide[:-1]
+	handleCutValue = cut.value
+
+	graph.delete_vertices(["s", "t"])
+
+	return (handleCutValue, smallerSide)
 
 try:
 	with cplex.Cplex() as cpx:
@@ -92,11 +156,22 @@ try:
 		logging.info("Populating!")
 		cpx.populate_solution_pool()
 
-		logging.info("Printing {} solutions:".format(cpx.solution.pool.get_num()))
+		logging.info("Obtained {} solutions".format(cpx.solution.pool.get_num()))
 		for i in range(cpx.solution.pool.get_num()):
 			#[:-1] to exclude the value of k
-			logging.info("Solution {}: {}".format(i, [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]))
-			logging.info("Objective value {}: {}".format(i, cpx.solution.pool.get_objective_value(i)))
+			teethIndices = [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]
+			k = cpx.solution.pool.get_values(i, "k")
+			logging.info("Teeth {}: {}".format(i, teethIndices))
+			
+			teethSurplus = cpx.solution.pool.get_objective_value(i)
+			logging.info("Objective value {}: {}".format(i, teethSurplus))
+
+			handleCutValue, handle = findHandle(d, g, teethIndices)
+			logging.info("Handle {}: {}".format(i, handle))
+			logging.info("Handle cut {}: {}".format(i, handleCutValue))
+			logging.info("Comb violation {}: {}".format(i, (k+1) - (teethSurplus + handleCutValue)))
+
+
 
 		
 except cplex.exceptions.CplexError as e:
