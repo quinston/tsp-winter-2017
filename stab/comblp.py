@@ -2,6 +2,7 @@ import cplex
 import argparse
 import logging
 from igraph import Graph
+import itertools
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -87,6 +88,10 @@ def findHandle(dominoes, graph, teethIndices):
 
 	If the sides have the same size, we pick A 
 	"""
+
+	"""
+	Pick the side with less slack??? (greater gamma)
+	"""
 	INFINITY = len(graph.es)
 
 	graph.add_vertex(name="s")
@@ -160,7 +165,7 @@ try:
 		for i in range(cpx.solution.pool.get_num()):
 			#[:-1] to exclude the value of k
 			teethIndices = [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]
-			k = cpx.solution.pool.get_values(i, "k")
+			noTeeth = 2*cpx.solution.pool.get_values(i, "k") + 3
 			logging.info("Teeth {}: {}".format(i, teethIndices))
 			
 			teethSurplus = cpx.solution.pool.get_objective_value(i)
@@ -169,7 +174,7 @@ try:
 			handleCutValue, handle = findHandle(d, g, teethIndices)
 			logging.info("Handle {}: {}".format(i, handle))
 			logging.info("Handle cut {}: {}".format(i, handleCutValue))
-			logging.info("Comb violation {}: {}".format(i, (k+1) - (teethSurplus + handleCutValue)))
+			logging.info("Comb violation {} (positive is good): {}".format(i, (noTeeth+1) - (teethSurplus + handleCutValue)))
 
 
 
