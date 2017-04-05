@@ -3,6 +3,9 @@ import argparse
 import logging
 from igraph import Graph
 import itertools
+import deap
+from deap import creator,base,tools,algorithms
+import random
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -117,64 +120,39 @@ def findHandle(dominoes, graph, teethIndices, shouldPickSideA):
 
 	return (handleCutValue, smallerSide)
 
-def getHandleByPuttingSmallSidesTogether(dominoes, graph, teethIndices):
-	return findHandle(d, g, teethIndices, lambda i: len(d.dominoToA[i]) >= len(d.dominoToB[i]))
-
-# tuple -> float
-dominoSideToSlack = {}
-"""
-Assign  the domino sides such that there is approximately the same
-amount of slack on each side 
-"""
-def getHandleByBalancingSlack(dominoes, graph, teethIndices):
-	slackDifferences = []
-
-	for i in teethIndices:
-		ta = tuple(dominoes.dominoToA[i])
-		if ta not in dominoSideToSlack:
-			dominoSideToSlack[ta] = len(ta) - 1 -sum(graph[u,v] for u,v in itertools.combinations(ta, 2))
-
-		tb = tuple(dominoes.dominoToB[i])
-		if tb not in dominoSideToSlack:
-			dominoSideToSlack[tb] = len(tb) - 1 -sum(graph[u,v] for u,v in itertools.combinations(tb, 2))
-
-		slackDifferences.append(dominoSideToSlack[ta] - dominoSideToSlack[tb])
-
-	logging.debug("Slack differences: {}".format(slackDifferences))
-
-	# All slacks are computed at this point 
-	"""
-	Create this MIP:
-
-	min t:
-	t >= 0
-	t = sum_i a_i(alpha_i - beta_i)
-	a_i binary
-
-	where alpha_i, beta_i are the slacks of A_i, B_i
-	"""
-	with cplex.Cplex() as balanceProblem:
-		#a_i's
-		balanceProblem.variables.add(types=cpx.variables.type.binary * len(teethIndices))
-		#t
-		balanceProblem.variables.add(names=["t"], lb=[0])
-		balanceProblem.objective.set_sense(balanceProblem.objective.sense.minimize)
-		balanceProblem.objective.set_linear("t", 1)
-
-		# 0 = -t +  sum_i (...)
-		balanceProblem.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=list(range(len(teethIndices) + 1)), val=slackDifferences + [-1])], rhs=[0], senses='E')
-
-		balanceProblem.parameters.mip.limits.nodes.set(min(len(teethIndices) * 100, 10000))
-		balanceProblem.set_results_stream(None)
-		balanceProblem.solve()
-		# Omit t
-		solution = dict(zip(teethIndices, balanceProblem.solution.get_values()[:-1]))
-		logging.debug("Slack discrepency: {}".format(balanceProblem.solution.get_objective_value()))
-		
-		return findHandle(dominoes, graph, teethIndices, lambda i: solution[i] == 1)
-
 def geneticallyFindBestHandle(dominoes, graph, teethIndices):
-	pass
+	"""
+	Find the best assignment of domino sides, where an assignment
+is just a 0-1 vector of length p where there are p teeth
+	"""
+	# Reminder: we want to maximize the violation, so we need to minimize the handle's cut capacity
+	deap.creator.create("HandleCapacityMin", deap.base.Fitness, weights=(-1,))
+	deap.creator.create("Individual", list, fitness=deap.creator.HandleCapacityMin)
+
+	toolbox = deap.base.Toolbox()
+	toolbox.register("random_bit", random.randint, 0, 1)
+	toolbox.register("individual", deap.tools.initRepeat, deap.creator.Individual, toolbox.random_bit, len(teethIndices))
+	toolbox.register("population", deap.tools.initRepeat, list, toolbox.individual)
+
+	toolbox.register("mate", deap.tools.cxTwoPoint)
+	toolbox.register("mutate", deap.tools.mutFlipBit, indpb=0.05)
+	toolbox.register("select", deap.tools.selTournament, tournsize=8)
+
+	def assignmentToHandle(bits):
+		return findHandle(dominoes, graph, teethIndices, lambda i: dict(zip(teethIndices, bits))[i]==True)
+
+	def evaluate(x):
+		value, side = assignmentToHandle(x)
+		return (value,)
+
+	toolbox.register("evaluate", evaluate)
+
+	pop = toolbox.population(n=20)
+	hof = deap.tools.HallOfFame(1)
+	deap.algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=100, halloffame=hof, verbose=False)
+
+	return assignmentToHandle(hof[0])
+
 
 try:
 	with cplex.Cplex() as cpx:
@@ -218,16 +196,20 @@ try:
 			#[:-1] to exclude the value of k
 			teethIndices = [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]
 			noTeeth = 2*cpx.solution.pool.get_values(i, "k") + 3
-			logging.info("Teeth {}: {}".format(i, teethIndices))
-			
-			teethSurplus = cpx.solution.pool.get_objective_value(i)
-			logging.info("Objective value {}: {}".format(i, teethSurplus))
 
-			handleCutValue, handle = getHandleByBalancingSlack(d, g, teethIndices)
-			logging.info("Handle {}: {}".format(i, handle))
-			logging.info("Handle cut {}: {}".format(i, handleCutValue))
-			logging.info("Comb violation {} (positive is good): {}".format(i, (noTeeth+1) - (teethSurplus + handleCutValue)))
+			# Sanity check
+			if len(teethIndices) % 2 == 1:
+				logging.info("Teeth {}: {}".format(i, teethIndices))
+				
+				teethSurplus = cpx.solution.pool.get_objective_value(i)
+				logging.info("Objective value {}: {}".format(i, teethSurplus))
 
+				handleCutValue, handle = geneticallyFindBestHandle(d, g, teethIndices)
+				logging.info("Handle {}: {}".format(i, handle))
+				logging.info("Handle cut {}: {}".format(i, handleCutValue))
+				logging.info("Comb violation {} (positive is good): {}".format(i, (noTeeth+1) - (teethSurplus + handleCutValue)))
+			else:
+				logging.warning("Ignored even size comb {}".format(i))
 
 
 		
