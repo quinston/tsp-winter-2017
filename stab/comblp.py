@@ -81,24 +81,19 @@ g = getSupportGraph()
 """
 Given indices to teeth, finds min cut containing union of the smallest sides
 of each domino
+
+shouldPickSideA: Int -> Bool, i |-> whether or not ot pick side A of domino i to be on side "s"
+of the cut. What being on side "s" means is
+not important as long as shouldPickSideA is consistent in some sense
 """
-def findHandle(dominoes, graph, teethIndices):
-	"""
-	As a heuristic, put the largest sides together on one side of the handle cut 
-
-	If the sides have the same size, we pick A 
-	"""
-
-	"""
-	Pick the side with less slack??? (greater gamma)
-	"""
+def findHandle(dominoes, graph, teethIndices, shouldPickSideA):
 	INFINITY = len(graph.es)
 
 	graph.add_vertex(name="s")
 	graph.add_vertex(name="t")
 
 	for i in teethIndices:
-		if len(dominoes.dominoToA[i]) >= len(dominoes.dominoToB[i]):
+		if shouldPickSideA(i):
 			sSide = dominoes.dominoToA[i] 
 			tSide = dominoes.dominoToB[i]
 		else:
@@ -171,7 +166,7 @@ try:
 			teethSurplus = cpx.solution.pool.get_objective_value(i)
 			logging.info("Objective value {}: {}".format(i, teethSurplus))
 
-			handleCutValue, handle = findHandle(d, g, teethIndices)
+			handleCutValue, handle = findHandle(d, g, teethIndices, lambda i: len(d.dominoToA[i]) >= len(d.dominoToB[i]))
 			logging.info("Handle {}: {}".format(i, handle))
 			logging.info("Handle cut {}: {}".format(i, handleCutValue))
 			logging.info("Comb violation {} (positive is good): {}".format(i, (noTeeth+1) - (teethSurplus + handleCutValue)))
