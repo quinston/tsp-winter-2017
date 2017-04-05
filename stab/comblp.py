@@ -5,7 +5,7 @@ from igraph import Graph
 import itertools
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logger.addHandler(ch)
@@ -117,6 +117,65 @@ def findHandle(dominoes, graph, teethIndices, shouldPickSideA):
 
 	return (handleCutValue, smallerSide)
 
+def getHandleByPuttingSmallSidesTogether(dominoes, graph, teethIndices):
+	return findHandle(d, g, teethIndices, lambda i: len(d.dominoToA[i]) >= len(d.dominoToB[i]))
+
+# tuple -> float
+dominoSideToSlack = {}
+"""
+Assign  the domino sides such that there is approximately the same
+amount of slack on each side 
+"""
+def getHandleByBalancingSlack(dominoes, graph, teethIndices):
+	slackDifferences = []
+
+	for i in teethIndices:
+		ta = tuple(dominoes.dominoToA[i])
+		if ta not in dominoSideToSlack:
+			dominoSideToSlack[ta] = len(ta) - 1 -sum(graph[u,v] for u,v in itertools.combinations(ta, 2))
+
+		tb = tuple(dominoes.dominoToB[i])
+		if tb not in dominoSideToSlack:
+			dominoSideToSlack[tb] = len(tb) - 1 -sum(graph[u,v] for u,v in itertools.combinations(tb, 2))
+
+		slackDifferences.append(dominoSideToSlack[ta] - dominoSideToSlack[tb])
+
+	logging.debug("Slack differences: {}".format(slackDifferences))
+
+	# All slacks are computed at this point 
+	"""
+	Create this MIP:
+
+	min t:
+	t >= 0
+	t = sum_i a_i(alpha_i - beta_i)
+	a_i binary
+
+	where alpha_i, beta_i are the slacks of A_i, B_i
+	"""
+	with cplex.Cplex() as balanceProblem:
+		#a_i's
+		balanceProblem.variables.add(types=cpx.variables.type.binary * len(teethIndices))
+		#t
+		balanceProblem.variables.add(names=["t"], lb=[0])
+		balanceProblem.objective.set_sense(balanceProblem.objective.sense.minimize)
+		balanceProblem.objective.set_linear("t", 1)
+
+		# 0 = -t +  sum_i (...)
+		balanceProblem.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=list(range(len(teethIndices) + 1)), val=slackDifferences + [-1])], rhs=[0], senses='E')
+
+		balanceProblem.parameters.mip.limits.nodes.set(min(len(teethIndices) * 100, 10000))
+		balanceProblem.set_results_stream(None)
+		balanceProblem.solve()
+		# Omit t
+		solution = dict(zip(teethIndices, balanceProblem.solution.get_values()[:-1]))
+		logging.debug("Slack discrepency: {}".format(balanceProblem.solution.get_objective_value()))
+		
+		return findHandle(dominoes, graph, teethIndices, lambda i: solution[i] == 1)
+
+def geneticallyFindBestHandle(dominoes, graph, teethIndices):
+	pass
+
 try:
 	with cplex.Cplex() as cpx:
 		noDominoes = len(d.dominoToWeight)
@@ -151,8 +210,6 @@ try:
 		cpx.parameters.mip.limits.populate.set(args.no_stable_sets)
 		cpx.parameters.mip.limits.nodes.set(10000 * args.no_stable_sets)
 
-		cpx.write('oddstab.lp')
-
 		logging.info("Populating!")
 		cpx.populate_solution_pool()
 
@@ -166,7 +223,7 @@ try:
 			teethSurplus = cpx.solution.pool.get_objective_value(i)
 			logging.info("Objective value {}: {}".format(i, teethSurplus))
 
-			handleCutValue, handle = findHandle(d, g, teethIndices, lambda i: len(d.dominoToA[i]) >= len(d.dominoToB[i]))
+			handleCutValue, handle = getHandleByBalancingSlack(d, g, teethIndices)
 			logging.info("Handle {}: {}".format(i, handle))
 			logging.info("Handle cut {}: {}".format(i, handleCutValue))
 			logging.info("Comb violation {} (positive is good): {}".format(i, (noTeeth+1) - (teethSurplus + handleCutValue)))
