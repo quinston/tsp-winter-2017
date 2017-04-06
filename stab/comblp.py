@@ -200,14 +200,20 @@ try:
 			# Sanity check
 			if len(teethIndices) % 2 == 1:
 				logging.info("Teeth {}: {}".format(i, teethIndices))
-				
-				teethSurplus = cpx.solution.pool.get_objective_value(i)
-				logging.info("Objective value {}: {}".format(i, teethSurplus))
+				logging.info("Objective value {}: {}".format(i, cpx.solution.pool.get_objective_value(i)))
+
+				# For a set of vertices S, compute the sum of all edges uv for u,v in S 
+				def gamma(S):
+					return sum(g[u,v] for u,v in itertools.combinations(S, 2))
+
+				teeth = [d.dominoToA[i] + d.dominoToB[i] for i in teethIndices]
+				teethDeltas = sum(2 * (len(tooth) - gamma(tooth)) for tooth in teeth)
+				logging.info("Sum of teeth cuts {}: {}".format(i, teethDeltas))
 
 				handleCutValue, handle = geneticallyFindBestHandle(d, g, teethIndices)
 				logging.info("Handle {}: {}".format(i, handle))
 				logging.info("Handle cut {}: {}".format(i, handleCutValue))
-				logging.info("Comb violation {} (positive is good): {}".format(i, (noTeeth+1) - (teethSurplus + handleCutValue)))
+				logging.info("Comb violation {} (positive is good): {}".format(i, (3*noTeeth+1) - (teethDeltas + handleCutValue)))
 			else:
 				logging.warning("Ignored even size comb {}".format(i))
 
