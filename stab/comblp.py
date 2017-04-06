@@ -185,6 +185,9 @@ try:
 		logging.info("Adding parity constraint sum(x) = 2k+3")
 		cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames + ["k"], val=([1]*noDominoes) + [-2])], rhs=[3], senses='E')
 
+		logging.info("Add objective value <= 1 constraint to aid enumeration")
+		cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames, val=d.dominoToWeight)], rhs=[1], senses='L')
+
 		cpx.parameters.mip.limits.populate.set(args.no_stable_sets)
 		cpx.parameters.mip.limits.nodes.set(10000 * args.no_stable_sets)
 
