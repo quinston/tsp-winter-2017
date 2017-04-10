@@ -135,7 +135,7 @@ is just a 0-1 vector of length p where there are p teeth
 	toolbox.register("population", deap.tools.initRepeat, list, toolbox.individual)
 
 	toolbox.register("mate", deap.tools.cxTwoPoint)
-	toolbox.register("mutate", deap.tools.mutFlipBit, indpb=0.05)
+	toolbox.register("mutate", deap.tools.mutFlipBit, indpb=0.5)
 	toolbox.register("select", deap.tools.selTournament, tournsize=8)
 
 	def assignmentToHandle(bits):
@@ -149,7 +149,7 @@ is just a 0-1 vector of length p where there are p teeth
 
 	pop = toolbox.population(n=20)
 	hof = deap.tools.HallOfFame(1)
-	deap.algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=100, halloffame=hof, verbose=False)
+	deap.algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=500, halloffame=hof, verbose=False)
 
 	return assignmentToHandle(hof[0])
 
