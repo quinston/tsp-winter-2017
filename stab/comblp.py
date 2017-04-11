@@ -7,6 +7,24 @@ import deap
 from deap import creator,base,tools,algorithms
 import random
 
+# Randomly select one item from s according to weights
+def weighted_choice(s, weights):
+	if len(s) != len(weights):
+		raise ValueError("Size mismatch between sequence and weights")
+	if len(s) == 0:
+		raise IndexError("Choosing from empty sequence")
+	
+	total = sum(weights)
+	r = random.uniform(0, total)
+	choice = s[0]
+	x = 0
+	for i in range(len(weights)):
+		if x+weights[i] > r:
+			return choice
+		else:
+			choice = s[i+1]
+			x += weights[i]
+
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
@@ -59,7 +77,6 @@ def getDominoes():
 
 	return d
 
-d = getDominoes()
 
 def getSupportGraph():
 	with open(args.x_filename) as f:
@@ -79,7 +96,6 @@ def getSupportGraph():
 
 		return g
 
-g = getSupportGraph()
 
 """
 Given indices to teeth, finds min cut containing union of the smallest sides
@@ -153,75 +169,190 @@ is just a 0-1 vector of length p where there are p teeth
 
 	return assignmentToHandle(hof[0])
 
+"""
+1. Contract each domino side (Ai, Bi) to a node
+2. Randomly contract edges except edges that have Ai on
+one side and Bi on the other side. While running the algorithm,
+you need to keep track of whether any randomly chosen edge 
+has two sides of one domino on either side of the edge
+3. Continue until just one edge
 
-try:
-	with cplex.Cplex() as cpx:
-		noDominoes = len(d.dominoToWeight)
-		allDominoVariableNames = ["x{}".format(i) for i in range(noDominoes)]
+Karger-Stein: Contract to size n/sqrt(2), then continue twice from this stage,
+then take the best one
+"""
+def findHandleByModifiedKargers(dominoes, graph, teethIndices):
+	shrunkenDominoesGraph = graph.copy()
+	# Give each node a "contents" attribute: a contraction of multiple nodes will have a "contents" attribute of length greater than one
+	for u in shrunkenDominoesGraph.vs:
+		u["contents"] = set([u.index])
 
-		logging.info("Adding {} binary variables".format(noDominoes))
-		cpx.variables.add(names = allDominoVariableNames, types=cpx.variables.type.binary * noDominoes)
+	def shrink(graph, vertexIndices):
+		# len(set is necessary in case vertexIndices includes duplicates
+		newNoVertices = len(graph.vs) - len(set(vertexIndices)) + 1
+		vertexIndices = set(vertexIndices)
+		mapping = []
 
-		logging.info("Setting objective")
-		cpx.objective.set_sense(cpx.objective.sense.minimize)
-		for domino,weight in enumerate(d.dominoToWeight):
-			cpx.objective.set_linear("x{}".format(domino), weight)
-
-		logging.info("Adding clique constraints")
-		counter = 0
-		# The set of dominoes sharing any particular vertex form a clique
-		for v,dominoes in d.verticesToContainingDominoes.items():
-			# If only one tooth contains a given vertex, the constraint is redundant since the tooth variable is 0-1
-			if len(dominoes) > 1:
-				# Assume the first however many variables are  domino variables: use indices directly rather than names
-				cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=dominoes, val=[1]*len(dominoes))], rhs=[1], senses='L')
-			counter += 1
-			if counter % 100 == 0:
-				logging.info("Added {} constraints".format(counter))
-		
-		logging.info("Adding parity variable 'k'")
-		cpx.variables.add(names = ["k"], types=cpx.variables.type.integer, lb=[0])
-
-		logging.info("Adding parity constraint sum(x) = 2k+3")
-		cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames + ["k"], val=([1]*noDominoes) + [-2])], rhs=[3], senses='E')
-
-		logging.info("Add objective value <= 1 constraint to aid enumeration")
-		cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames, val=d.dominoToWeight)], rhs=[1], senses='L')
-
-		cpx.parameters.mip.limits.populate.set(args.no_stable_sets)
-		cpx.parameters.mip.limits.nodes.set(10000 * args.no_stable_sets)
-
-		logging.info("Populating!")
-		cpx.populate_solution_pool()
-
-		logging.info("Obtained {} solutions".format(cpx.solution.pool.get_num()))
-		for i in range(cpx.solution.pool.get_num()):
-			#[:-1] to exclude the value of k
-			teethIndices = [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]
-			noTeeth = 2*cpx.solution.pool.get_values(i, "k") + 3
-
-			# Sanity check
-			if len(teethIndices) % 2 == 1:
-				logging.info("Teeth {}: {}".format(i, teethIndices))
-				logging.info("Objective value {}: {}".format(i, cpx.solution.pool.get_objective_value(i)))
-
-				# For a set of vertices S, compute the sum of all edges uv for u,v in S 
-				def gamma(S):
-					return sum(g[u,v] for u,v in itertools.combinations(S, 2))
-
-				teeth = [d.dominoToA[i] + d.dominoToB[i] for i in teethIndices]
-				teethDeltas = sum(2 * (len(tooth) - gamma(tooth)) for tooth in teeth)
-				logging.info("Sum of teeth cuts {}: {}".format(i, teethDeltas))
-
-				handleCutValue, handle = geneticallyFindBestHandle(d, g, teethIndices)
-				logging.info("Handle {}: {}".format(i, handle))
-				logging.info("Handle cut {}: {}".format(i, handleCutValue))
-				logging.info("Comb violation {} (positive is good): {}".format(i, (3*noTeeth+1) - (teethDeltas + handleCutValue)))
+		currentVertex = 0
+		for i in range(len(graph.vs)):
+			if i in vertexIndices:
+				mapping.append(newNoVertices - 1)
 			else:
-				logging.warning("Ignored even size comb {}".format(i))
+				mapping.append(currentVertex)
+				currentVertex += 1
+
+		def combineSupervertices(attrs):
+			contents = attrs[0]
+			for S in attrs[1:]:
+				contents |= S
+			return contents
+
+		graph.contract_vertices(mapping, combine_attrs={"contents": combineSupervertices})
+
+		# Need multiple edges since they migh show up in the cut
+		# Loops will deifnitely not show up
+		graph.simplify(multiple=False, loops=True)
+		return graph.vs[newNoVertices - 1]
 
 
-		
-except cplex.exceptions.CplexError as e:
-	print(e)
-	raise e
+	# Contract each domino side to a point
+	for i in teethIndices:
+		a = shrink(shrunkenDominoesGraph, dominoes.dominoToA[i])
+		a["contents"] = set(["a{}".format(i)])
+		b = shrink(shrunkenDominoesGraph, dominoes.dominoToB[i])
+		b["contents"] = set(["b{}".format(i)])
+
+	"""
+	Detects if s and t contain two sides of a domino, in which case they must not be merged
+	"""
+	def isSemicutEdge(graph, s, t):
+		S1 = graph.vs[s]["contents"]
+		S2 = graph.vs[t]["contents"]
+		for i in teethIndices:
+			if ("a{}".format(i) in S1 and "b{}".format(i) in S2) or ("a{}".format(i) in S2 and "b{}".format(i) in S1):
+				return True
+		return False
+
+	def modifiedKargers(graph):
+		graph = graph.copy()
+		while len(graph.vs) > 2:
+			nonSemicutEdges = [e for e in graph.es if not isSemicutEdge(graph, e.source, e.target)]
+			# If there are no semicut edges, it's because we have an odd cycle where 
+			# every edge is a semicut edge
+			# We shrink an arbitrary pair
+			if len(nonSemicutEdges) == 0:
+				nonSemicutEdges = [(u,v) for u,v in itertools.combinations(range(len(graph.vs)), 2) if not isSemicutEdge(graph, u,v)]
+
+				# If we still have no choices, we have a triangle
+				# In this case, compute a min cut, distribute the domino sides as possible, distribute the remaining vertices to a larger side
+				if len(nonSemicutEdges) == 0:
+					#TODO
+					pass
+
+				edgeToContract = random.choice(nonSemicutEdges)
+
+				logging.debug("Shrinking two things on a void edge {}".format([graph.vs[i]["contents"] for i in edgeToContract]))
+				logging.debug("Current supernodes {}".format(graph.vs["contents"]))
+
+				shrink(graph, edgeToContract)
+
+			else:
+				edgeToContract = weighted_choice(nonSemicutEdges, [e["weight"] for e in nonSemicutEdges])
+
+				logging.debug("Shrinking two things on a weight-{} edge {}".format(graph[edgeToContract.tuple], [graph.vs[i]["contents"] for i in edgeToContract.tuple]))
+				logging.debug("Current supernodes {}".format(graph.vs["contents"]))
+
+				shrink(graph, edgeToContract.tuple)
+
+
+		if len(graph.vs[graph.es[0].source]["contents"]) <= len(graph.vs[graph.es[0].target]["contents"]):
+			return graph.vs[graph.es[0].source]["contents"]
+		else:
+			return graph.vs[graph.es[0].target]["contents"]
+
+	NO_ITERATIONS = 1
+	bestCut = None
+	bestCutValue = None
+	for i in range(NO_ITERATIONS):
+		cut = modifiedKargers(shrunkenDominoesGraph)
+		# Cannot simply sum over u,v in cut since there exist parallel edges and loops
+		cutValue = sum(e["weight"] for e in shrunkenDominoesGraph.es if len(cut.intersection((e.source, e.target))) == 1)
+		if bestCutValue == None or cutValue < bestCutValue:
+			bestCut = cut
+			bestCutValue = cutValue
+
+	return (bestCutValue, list(bestCut))
+
+if __name__ == '__main__':
+	d = getDominoes()
+	g = getSupportGraph()
+	try:
+		with cplex.Cplex() as cpx:
+			noDominoes = len(d.dominoToWeight)
+			allDominoVariableNames = ["x{}".format(i) for i in range(noDominoes)]
+	
+			logging.info("Adding {} binary variables".format(noDominoes))
+			cpx.variables.add(names = allDominoVariableNames, types=cpx.variables.type.binary * noDominoes)
+	
+			logging.info("Setting objective")
+			cpx.objective.set_sense(cpx.objective.sense.minimize)
+			for domino,weight in enumerate(d.dominoToWeight):
+				cpx.objective.set_linear("x{}".format(domino), weight)
+	
+			logging.info("Adding clique constraints")
+			counter = 0
+			# The set of dominoes sharing any particular vertex form a clique
+			for v,dominoes in d.verticesToContainingDominoes.items():
+				# If only one tooth contains a given vertex, the constraint is redundant since the tooth variable is 0-1
+				if len(dominoes) > 1:
+					# Assume the first however many variables are  domino variables: use indices directly rather than names
+					cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=dominoes, val=[1]*len(dominoes))], rhs=[1], senses='L')
+				counter += 1
+				if counter % 100 == 0:
+					logging.info("Added {} constraints".format(counter))
+			
+			logging.info("Adding parity variable 'k'")
+			cpx.variables.add(names = ["k"], types=cpx.variables.type.integer, lb=[0])
+	
+			logging.info("Adding parity constraint sum(x) = 2k+3")
+			cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames + ["k"], val=([1]*noDominoes) + [-2])], rhs=[3], senses='E')
+	
+			logging.info("Add objective value <= 1 constraint to aid enumeration")
+			cpx.linear_constraints.add(lin_expr = [cplex.SparsePair(ind=allDominoVariableNames, val=d.dominoToWeight)], rhs=[1], senses='L')
+	
+			cpx.parameters.mip.limits.populate.set(args.no_stable_sets)
+			cpx.parameters.mip.limits.nodes.set(10000 * args.no_stable_sets)
+	
+			logging.info("Populating!")
+			cpx.populate_solution_pool()
+	
+			logging.info("Obtained {} solutions".format(cpx.solution.pool.get_num()))
+			for i in range(cpx.solution.pool.get_num()):
+				#[:-1] to exclude the value of k
+				teethIndices = [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]
+				noTeeth = 2*cpx.solution.pool.get_values(i, "k") + 3
+	
+				# Sanity check
+				if len(teethIndices) % 2 == 1:
+					logging.info("Teeth {}: {}".format(i, teethIndices))
+					logging.info("Objective value {}: {}".format(i, cpx.solution.pool.get_objective_value(i)))
+	
+					# For a set of vertices S, compute the sum of all edges uv for u,v in S 
+					def gamma(S):
+						return sum(g[u,v] for u,v in itertools.combinations(S, 2))
+	
+					teeth = [d.dominoToA[i] + d.dominoToB[i] for i in teethIndices]
+					teethDeltas = sum(2 * (len(tooth) - gamma(tooth)) for tooth in teeth)
+					logging.info("Sum of teeth cuts {}: {}".format(i, teethDeltas))
+	
+					handleCutValue, handle = findHandleByModifiedKargers(d, g, teethIndices)
+					logging.info("Handle {}: {}".format(i, handle))
+					logging.info("Handle cut {}: {}".format(i, handleCutValue))
+					logging.info("Comb violation {} (positive is good): {}".format(i, (3*noTeeth+1) - (teethDeltas + handleCutValue)))
+				else:
+					logging.warning("Ignored even size comb {}".format(i))
+	
+	
+			
+	except cplex.exceptions.CplexError as e:
+		print(e)
+		raise e
