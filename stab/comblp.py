@@ -63,8 +63,7 @@ def getDominoes():
 			d.dominoToWeight.append(float(lineSplit[0]))
 
 # For each vertex w in the domino T, record T in w's  list 
-			#:-1 is to avoid trailing space
-			for w in lineSplit[3:-1]:
+			for w in lineSplit[3:]:
 				d.verticesToContainingDominoes[int(w)].append(numDomino)
 
 			sizeA = int(lineSplit[1])
