@@ -205,20 +205,58 @@ def findHandleByModifiedKargers(dominoes, graph, teethIndices):
 				contents |= S
 			return contents
 
-		graph.contract_vertices(mapping, combine_attrs={"contents": combineSupervertices})
+		def onlyKeepNameIfSingleton(attrs):
+			if len(attrs) > 1:
+				return None
+			elif len(attrs) == 1:
+				return attrs[0]
 
-		# Need multiple edges since they migh show up in the cut
-		# Loops will deifnitely not show up
-		graph.simplify(multiple=False, loops=True)
+		graph.contract_vertices(mapping, combine_attrs={"contents": combineSupervertices, "name": onlyKeepNameIfSingleton})
 		return graph.vs[newNoVertices - 1]
 
-
 	# Contract each domino side to a point
+	# In order to avoid updating the indices each time we contract a set, 
+	# we will have to contract all the domino sides at once
+	toothIndexToSize = dict((i, len(dominoes.dominoToA[i]) + len(dominoes.dominoToB[i])) for i in teethIndices)
+	noNonToothVertices = len(shrunkenDominoesGraph.vs) - sum(toothIndexToSize.values())
+	sideAtoNewVertexId = dict(zip(teethIndices, range(noNonToothVertices, noNonToothVertices + len(teethIndices))))
+	sideBtoNewVertexId = dict(zip(teethIndices, range(noNonToothVertices + len(teethIndices), noNonToothVertices + 2*len(teethIndices))))
+	
+	mapping = []
+	currentVertex = 0
+	for i in range(len(shrunkenDominoesGraph.vs)):
+		toothToWhichVertexBelongs = set(dominoes.verticesToContainingDominoes[i]).intersection(teethIndices)
+		if len(toothToWhichVertexBelongs) == 0:
+			mapping.append(currentVertex)
+			currentVertex += 1
+		else:
+			t = toothToWhichVertexBelongs.pop()
+			if i in dominoes.dominoToA[t]:
+				mapping.append(sideAtoNewVertexId[t])
+			else:
+				mapping.append(sideBtoNewVertexId[t])
+
+	# For vertices that are not being merged: keep their contents attribute
+	# For vertices being merged, discard it since we are going to replace it with
+	# the domino side label
+	def f(x):
+		if len(x) > 1:
+			return None
+		else:
+			return x[0]
+		
+	shrunkenDominoesGraph.contract_vertices(mapping, combine_attrs={"contents": f})
+
+	# Replace the combined contents with a single label describing the domino side
+	# Also give them names to easily access them after contracting
 	for i in teethIndices:
-		a = shrink(shrunkenDominoesGraph, dominoes.dominoToA[i])
+		a = shrunkenDominoesGraph.vs[sideAtoNewVertexId[i]]
 		a["contents"] = set(["a{}".format(i)])
-		b = shrink(shrunkenDominoesGraph, dominoes.dominoToB[i])
+		a["name"] = "a{}".format(i)
+		b = shrunkenDominoesGraph.vs[sideBtoNewVertexId[i]]
 		b["contents"] = set(["b{}".format(i)])
+		b["name"] = "b{}".format(i)
+
 
 	"""
 	Detects if s and t contain two sides of a domino, in which case they must not be merged
@@ -233,34 +271,60 @@ def findHandleByModifiedKargers(dominoes, graph, teethIndices):
 
 	def modifiedKargers(graph):
 		graph = graph.copy()
+
+		# First create a domino assignment
+		# Pick one of the domino sides, and keep contracting it
+		# with one of its domino side 
+		# neighbours that is not in the same domino
+		# Contract the opposite side of the root with the opposite
+		# side of the chosen neighbour domino
+		# Do this (p-1) times where p is the number of dominoes
+		logging.debug("Contents before doing Kargers: {}".format(graph.vs["contents"]))
+		logging.debug("Names before doing Kargers: {}".format(graph.vs["name"]))
+
+		root = graph.vs.select(name="a{}".format(teethIndices[0]))[0]
+
+		otherDominoSides = set(["a{}".format(i) for i in teethIndices[1:]] + ["b{}".format(i) for i in teethIndices[1:]])
+		def other(t, x1):
+			if t[0] == x1:
+				return t[1]
+			else:
+				return t[0]
+
+		for i in range(len(teethIndices) - 1):
+			logging.info("Remainign domino sides: {}".format(otherDominoSides))
+			logging.info("Contents: {}".format(graph.vs["contents"]))
+			otherDominoSidesVertexIndices = set(graph.vs.select(name=x)[0].index for x in otherDominoSides)
+			nonzeroEdgesToDominoSides = [e for e in graph.es if root.index in e.tuple and other(e.tuple, root.index) in otherDominoSidesVertexIndices]
+
+			if len(nonzeroEdgesToDominoSides) > 0:
+				neighbouringDominoSideToContract = weighted_choice([other(e.tuple, root.index) for e in nonzeroEdgesToDominoSides], [e["weight"] for e in nonzeroEdgesToDominoSides])
+			else:
+				# Choose uniormly at random amongst 0-weight edges
+				neighbouringDominoSideToContract = random.choice(tuple(otherDominoSidesVertexIndices))
+
+			logging.info("Taking domino side {}".format(graph.vs[neighbouringDominoSideToContract]["name"]))
+			incomingToothIndex = graph.vs[neighbouringDominoSideToContract]["name"][1:]
+
+			# Update the root for next shrinking
+			root = shrink(graph, (root.index, neighbouringDominoSideToContract))
+			# Remove this domino from future selection
+			otherDominoSides = set(x for x in otherDominoSides if incomingToothIndex != x[1:])
+
+			# Update the root vertex object
+
 		while len(graph.vs) > 2:
 			nonSemicutEdges = [e for e in graph.es if not isSemicutEdge(graph, e.source, e.target)]
-			# If there are no semicut edges, it's because we have an odd cycle where 
-			# every edge is a semicut edge
-			# We shrink an arbitrary pair
 			if len(nonSemicutEdges) == 0:
-				nonSemicutEdges = [(u,v) for u,v in itertools.combinations(range(len(graph.vs)), 2) if not isSemicutEdge(graph, u,v)]
+				logging.debug(graph.vs["contents"])
+				raise 0
 
-				# If we still have no choices, we have a triangle
-				# In this case, compute a min cut, distribute the domino sides as possible, distribute the remaining vertices to a larger side
-				if len(nonSemicutEdges) == 0:
-					#TODO
-					pass
+			edgeToContract = weighted_choice(nonSemicutEdges, [e["weight"] for e in nonSemicutEdges])
 
-				edgeToContract = random.choice(nonSemicutEdges)
+			logging.debug("Current supernodes {}".format(graph.vs["contents"]))
+			logging.debug("Shrinking two things on a weight-{} edge {}".format(graph[edgeToContract.tuple], [graph.vs[i]["contents"] for i in edgeToContract.tuple]))
 
-				logging.debug("Shrinking two things on a void edge {}".format([graph.vs[i]["contents"] for i in edgeToContract]))
-				logging.debug("Current supernodes {}".format(graph.vs["contents"]))
-
-				shrink(graph, edgeToContract)
-
-			else:
-				edgeToContract = weighted_choice(nonSemicutEdges, [e["weight"] for e in nonSemicutEdges])
-
-				logging.debug("Shrinking two things on a weight-{} edge {}".format(graph[edgeToContract.tuple], [graph.vs[i]["contents"] for i in edgeToContract.tuple]))
-				logging.debug("Current supernodes {}".format(graph.vs["contents"]))
-
-				shrink(graph, edgeToContract.tuple)
+			shrink(graph, edgeToContract.tuple)
 
 
 		if len(graph.vs[graph.es[0].source]["contents"]) <= len(graph.vs[graph.es[0].target]["contents"]):
