@@ -270,6 +270,15 @@ def findHandleByModifiedKargers(dominoes, graph, teethIndices):
 				return True
 		return False
 
+	"""
+	Returns a set of X
+	where X is either:
+	- aXX or bXX
+	- a numeric index for the vertices in the ORIGINAL graph PRIOR TO DOMINO SHRINKING
+
+	It derives the numeric index from whatever is in the "contents" attribute of the vertex of 
+the input graph. So you must make this beforehand.
+	"""
 	def modifiedKargers(graph):
 		graph = graph.copy()
 		# Manually eep copy all attributes
@@ -354,32 +363,29 @@ def findHandleByModifiedKargers(dominoes, graph, teethIndices):
 		logging.debug("Contents before doing Kargers: {}".format(shrunkenDominoesGraph.vs["contents"]))
 		logging.debug("Names before doing Kargers: {}".format(shrunkenDominoesGraph.vs["name"]))
 		cut = modifiedKargers(shrunkenDominoesGraph)
-
 		logging.debug("Got cut {}".format(cut))
-		# Replace string identifiers with vertex IDs
-		cutWithDominoSideNamesReplacedWithIndices = set(x if type(x) == int else shrunkenDominoesGraph.vs.select(name=x)[0].index for x in cut)
 
-		# Cannot simply sum over u,v in cut since there exist parallel edges and loops
-		# Note: loop edges would have intersection size 1 with the cut since the endpoints are the same
-		cutValue = sum(e["weight"] for e in shrunkenDominoesGraph.es if e.source != e.target and len(cutWithDominoSideNamesReplacedWithIndices.intersection((e.source, e.target))) == 1)
+		# Replace string identifiers with domino side contents
+		expandedCut = set()
+		for u in cut:
+			if type(u) == int:
+				expandedCut.add(u)
+			elif type(u) == str:
+				toothIndex = int(u[1:])
+				if u[0] == 'a':
+					expandedCut.update(dominoes.dominoToA[toothIndex])
+				else:
+					expandedCut.update(dominoes.dominoToB[toothIndex])
+
+		# Note: we're counting edges and vertices over the original graph now, not shrunkenDominoesGraph
+		cutValue = sum(e["weight"] for e in graph.es if len(expandedCut.intersection((e.source, e.target))) == 1)
 
 		if bestCutValue == None or cutValue < bestCutValue:
-			bestCut = cut
+			bestCut = expandedCut 
 			bestCutValue = cutValue
+			logging.info("New best cut: {}".format(bestCut))
 
-	# Replace domino side names with the original vertices now
-	c = []
-	for u in bestCut:
-		if type(u) == int:
-			c.append(u)
-		elif type(u) == str:
-			toothIndex = int(u[1:])
-			if u[0] == "a":
-				c += dominoes.dominoToA[toothIndex]
-			else:
-				c += dominoes.dominoToB[toothIndex]
-
-	return (bestCutValue, c)
+	return (bestCutValue, bestCut)
 
 if __name__ == '__main__':
 	d = getDominoes()
