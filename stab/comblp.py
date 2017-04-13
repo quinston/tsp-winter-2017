@@ -396,6 +396,8 @@ the input graph. So you must make this beforehand.
 
 			cutValue, cut = f.result()
 			if bestCutValue == None or cutValue < bestCutValue:
+				logging.info("Karger #{}".format(completionCounter))
+
 				bestCut = cut 
 				bestCutValue = cutValue
 				logging.info("New best cut: {}".format(bestCut))
