@@ -34,6 +34,7 @@ logger.addHandler(ch)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-stable-sets', type=int, help='desired number of stable sets')
+parser.add_argument('--no-karger-iterations', type=int, help='number of attempts at finding a handle')
 parser.add_argument('dom_filename', help='dominos')
 parser.add_argument('x_filename', help='LP solution')
 args = parser.parse_args()
@@ -356,6 +357,9 @@ the input graph. So you must make this beforehand.
 
 	NO_VERTICES = len(graph.vs)
 	NO_ITERATIONS = int(NO_VERTICES*(NO_VERTICES-1)/2*math.log(NO_VERTICES))
+	if args.no_karger_iterations:
+		NO_ITERATIONS = args.no_karger_iterations
+
 	bestCut = None
 	bestCutValue = None
 	for i in range(NO_ITERATIONS):
