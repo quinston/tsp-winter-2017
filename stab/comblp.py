@@ -359,7 +359,8 @@ the input graph. So you must make this beforehand.
 	bestCut = None
 	bestCutValue = None
 	for i in range(NO_ITERATIONS):
-		logging.info("Karger #{}".format(i))
+		if i % 1000 == 0:
+			logging.info("Karger #{}".format(i))
 		logging.debug("Contents before doing Kargers: {}".format(shrunkenDominoesGraph.vs["contents"]))
 		logging.debug("Names before doing Kargers: {}".format(shrunkenDominoesGraph.vs["name"]))
 		cut = modifiedKargers(shrunkenDominoesGraph)
@@ -384,6 +385,7 @@ the input graph. So you must make this beforehand.
 			bestCut = expandedCut 
 			bestCutValue = cutValue
 			logging.info("New best cut: {}".format(bestCut))
+			logging.info("New best cut value: {}".format(bestCutValue))
 
 	return (bestCutValue, bestCut)
 
