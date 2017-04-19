@@ -299,9 +299,11 @@ if __name__ == '__main__':
 
 					logging.info("Handle {}: {}".format(i, handle))
 					logging.info("Handle cut {}: {}".format(i, delta(handle)))
-					logging.info("Comb violation {} (negative is good): {}".format(i, cpx.solution.pool.get_objective_value(i) - delta(handle) + 1))
+					logging.info("Comb violation {} (positive is good): {}".format(i, cpx.solution.pool.get_objective_value(i) - delta(handle) + 1))
 				else:
-					logging.warning("Ignored even size comb {}".format(i))
+					logging.warning("Ignored even size-{} comb {}".format(len(teethIndices), i))
+					logging.warning("k for faulty comb {}: {}".format(i, cpx.solution.pool.get_values(i, "k"))) 
+					logging.warning("Teeth for faulty comb {}: {}".format(i, teethIndices))
 	
 			
 	except cplex.exceptions.CplexError as e:
