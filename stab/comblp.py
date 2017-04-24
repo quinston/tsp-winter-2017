@@ -279,21 +279,17 @@ if __name__ == '__main__':
 			cpx.objective.set_linear("v", 1)
 
 			cpx.parameters.mip.limits.populate.set(args.no_stable_sets)
-
-			#cpx.write('derp.lp')
-			#cpx.MIP_starts.add(cplex.SparsePair(ind=["x3", "x11", "x16", "x28", "x221", "m"], val=[1,1,1,1,1,1]), cpx.MIP_starts.effort_level.repair)
-			#logging.info("d(H): {}".format(delta([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 98, 99, 100, 101, 102, 103, 104, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1272, 1273, 1274, 1275, 1276, 1277, 1278, 1312, 1313, 1314, 1315, 1316, 1317, 1363, 1364, 1365, 1366, 1367, 1368, 1369])))
-			#for x in [3,11,16,28,221]:
-			#	logging.info("d({}): {}".format(x, delta(d.dominoToA[x]+d.dominoToB[x])))
 	
 			logging.info("Populating!")
 			cpx.populate_solution_pool()
 	
 			logging.info("Obtained {} solutions".format(cpx.solution.pool.get_num()))
 			for i in range(cpx.solution.pool.get_num()):
-				#[:-1] to exclude the value of m
-				teethIndices = [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-1]) if x == 1]
+				#[:-2] to exclude the value of m and v
+				teethIndices = [j for j,x in enumerate(cpx.solution.pool.get_values(i)[:-2]) if x == 1]
 				noTeeth = 2*cpx.solution.pool.get_values(i, "m") + 3
+
+				#logging.info("Variables {}: {}".format(i, pprint.pformat(list(zip(cpx.variables.get_names(), cpx.solution.pool.get_values(i))))))
 	
 				# Sanity check
 				if len(teethIndices) % 2 == 1:
